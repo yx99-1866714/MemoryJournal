@@ -1,11 +1,17 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth, journals
+from app.config import settings
 from app.db import engine, Base
 from app.models import User, Journal  # noqa: F401 — register models with Base.metadata
+
+# Configure logging for app modules
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
+logging.getLogger("app").setLevel(logging.DEBUG if settings.VERBOSE else logging.INFO)
 
 
 @asynccontextmanager

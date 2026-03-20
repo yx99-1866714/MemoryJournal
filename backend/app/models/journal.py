@@ -28,7 +28,7 @@ class Journal(Base):
 
     # EverMemOS fields (Phase 2)
     evermemos_request_id: Mapped[str | None] = mapped_column(String(255))
-    evermemos_status: Mapped[str | None] = mapped_column(String(50))
+    evermemos_status: Mapped[str | None] = mapped_column(String(500))
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

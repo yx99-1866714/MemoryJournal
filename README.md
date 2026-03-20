@@ -47,6 +47,21 @@ python -m pytest tests/ -v
 
 Tests use an in-memory SQLite database — no Docker required.
 
+### Environment Variables
+
+Create `backend/.env` with:
+
+```env
+DATABASE_URL=postgresql+asyncpg://memoryjournal:memoryjournal_dev@localhost:5433/memoryjournal
+JWT_SECRET=your-secret-key
+
+# Phase 2 — EverMemOS + LLM (optional, features degrade gracefully)
+EVERMEMOS_API_KEY=your-evermemos-key
+EVERMEMOS_API_URL=https://api.evermemos.com
+OPENROUTER_API_KEY=your-openrouter-key
+LLM_MODEL=x-ai/grok-4-fast
+```
+
 ---
 
 ## Extension (Plasmo + React)

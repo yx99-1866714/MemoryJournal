@@ -1,4 +1,4 @@
-import type { Journal, JournalListResponse, TokenResponse, User } from "./types"
+import type { FeedbackListResponse, Journal, JournalListResponse, ProcessingStatus, TokenResponse, User } from "./types"
 
 const API_BASE = "http://localhost:8000"
 
@@ -103,3 +103,12 @@ export async function apiGetJournalsByDate(year: number, month: number, day: num
   return request<JournalListResponse>(`/journals/by-date?year=${year}&month=${month}&day=${day}`)
 }
 
+// ---- Feedback (Phase 2) ----
+
+export async function apiGetJournalFeedback(journalId: string): Promise<FeedbackListResponse> {
+  return request<FeedbackListResponse>(`/journals/${journalId}/feedback`)
+}
+
+export async function apiGetJournalStatus(journalId: string): Promise<ProcessingStatus> {
+  return request<ProcessingStatus>(`/journals/${journalId}/status`)
+}

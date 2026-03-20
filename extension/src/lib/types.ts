@@ -62,3 +62,32 @@ export interface TokenResponse {
   access_token: string
   token_type: string
 }
+
+// ---- Feedback (Phase 2) ----
+
+export interface Feedback {
+  id: string
+  journal_id: string
+  agent_role: string
+  response_text: string
+  response_json: {
+    today_summary?: string
+    pattern_connection?: string
+    supportive_observation?: string
+    next_step?: string
+    reflection_question?: string
+  } | null
+  model_name: string | null
+  created_at: string
+}
+
+export interface FeedbackListResponse {
+  feedback: Feedback[]
+}
+
+export interface ProcessingStatus {
+  journal_id: string
+  status: string
+  evermemos_status: string | null
+  has_feedback: boolean
+}

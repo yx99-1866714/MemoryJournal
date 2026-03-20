@@ -6,7 +6,16 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "change-me"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 1440  # 24 hours
-    EVERMEMOS_API_KEY: str = ""  # Phase 2
+    # EverMemOS
+    EVERMEMOS_API_URL: str = "https://api.evermemos.com"
+    EVERMEMOS_API_KEY: str = ""
+
+    # LLM (OpenRouter)
+    OPENROUTER_API_KEY: str = ""
+    LLM_MODEL: str = "x-ai/grok-4-fast"
+
+    # Logging
+    VERBOSE: bool = False
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

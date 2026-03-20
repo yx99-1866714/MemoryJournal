@@ -5,6 +5,7 @@ import "~src/style.css"
 
 import AuthForm from "~components/AuthForm"
 import Calendar from "~components/Calendar"
+import FeedbackCard from "~components/FeedbackCard"
 import JournalCard from "~components/JournalCard"
 import JournalEditor from "~components/JournalEditor"
 import Layout from "~components/Layout"
@@ -194,13 +195,8 @@ function ViewJournalPage() {
           <span>Status: {currentJournal.status}</span>
         </div>
 
-        {/* Feedback placeholder */}
-        <div className="mt-8 p-6 rounded-2xl bg-primary-50/50 border border-primary-100">
-          <h2 className="font-semibold text-primary-800 mb-2">Agent Feedback</h2>
-          <p className="text-sm text-primary-600/70">
-            AI-powered feedback will appear here after Phase 3 is implemented.
-          </p>
-        </div>
+        {/* AI Feedback */}
+        <FeedbackCard journalId={currentJournal.id} journalStatus={currentJournal.status} />
       </div>
     </Layout>
   )
