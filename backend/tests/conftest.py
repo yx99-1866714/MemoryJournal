@@ -1,7 +1,9 @@
 """
 Shared test fixtures for backend API tests.
 
-Uses an in-memory SQLite database so tests run without Docker/Postgres.
+Uses an in-memory SQLite database with StaticPool so all async sessions
+share the same single connection (required for in-memory SQLite, since
+each new connection normally creates a new database).
 """
 import asyncio
 from typing import AsyncGenerator
@@ -10,15 +12,23 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 from app.db import Base, get_db
 from app.models import User, Journal  # noqa: F401 – register models
+from app.models.goal import Goal  # noqa: F401
+from app.models.task import Task  # noqa: F401
 
-# ---- In-memory SQLite engine for tests ----
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
+# ---- In-memory SQLite engine (single shared connection via StaticPool) ----
+test_engine = create_async_engine(
+    "sqlite+aiosqlite://",
+    echo=False,
+    poolclass=StaticPool,
+    connect_args={"check_same_thread": False},
+)
+TestSessionLocal = async_sessionmaker(
+    test_engine, class_=AsyncSession, expire_on_commit=False,
+)
 
 
 @pytest.fixture(scope="session")
@@ -47,6 +57,13 @@ async def _override_get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
+
+
+@pytest_asyncio.fixture
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    """Provide a DB session sharing the same in-memory database (via StaticPool)."""
+    async with TestSessionLocal() as session:
+        yield session
 
 
 @pytest_asyncio.fixture

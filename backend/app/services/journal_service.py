@@ -87,6 +87,24 @@ async def update_journal(
 
 
 async def delete_journal(db: AsyncSession, journal: Journal) -> None:
+    from app.models.goal import Goal
+    from app.models.task import Task
+
+    jid = journal.id
+
+    # Delete goals and tasks sourced from this journal
+    task_result = await db.execute(
+        select(Task).where(Task.source_journal_id == jid)
+    )
+    for task in task_result.scalars().all():
+        await db.delete(task)
+
+    goal_result = await db.execute(
+        select(Goal).where(Goal.source_journal_id == jid)
+    )
+    for goal in goal_result.scalars().all():
+        await db.delete(goal)
+
     await db.delete(journal)
     await db.flush()
 
@@ -96,14 +114,20 @@ async def get_journal_dates_for_month(
     user_id: uuid.UUID,
     year: int,
     month: int,
+    tz_offset_minutes: int = 0,
 ) -> list[int]:
-    """Return a list of day-of-month numbers that have at least one journal entry."""
+    """Return a list of day-of-month numbers that have at least one journal entry.
+    tz_offset_minutes: offset from UTC in minutes (e.g. -420 for PDT)
+    """
+    from sqlalchemy import text
+    # Convert UTC timestamp to user's local time by applying offset
+    local_time = Journal.created_at + text(f"interval '{tz_offset_minutes} minutes'")
     q = (
-        select(func.distinct(extract("day", Journal.created_at).cast(Integer)))
+        select(func.distinct(extract("day", local_time).cast(Integer)))
         .where(
             Journal.user_id == user_id,
-            extract("year", Journal.created_at) == year,
-            extract("month", Journal.created_at) == month,
+            extract("year", local_time) == year,
+            extract("month", local_time) == month,
         )
     )
     result = await db.execute(q)
@@ -116,15 +140,18 @@ async def get_journals_by_date(
     year: int,
     month: int,
     day: int,
+    tz_offset_minutes: int = 0,
 ) -> list[Journal]:
-    """Return all journals for a specific date."""
+    """Return all journals for a specific date in the user's local timezone."""
+    from sqlalchemy import text
+    local_time = Journal.created_at + text(f"interval '{tz_offset_minutes} minutes'")
     q = (
         select(Journal)
         .where(
             Journal.user_id == user_id,
-            extract("year", Journal.created_at) == year,
-            extract("month", Journal.created_at) == month,
-            extract("day", Journal.created_at) == day,
+            extract("year", local_time) == year,
+            extract("month", local_time) == month,
+            extract("day", local_time) == day,
         )
         .order_by(Journal.created_at.desc())
     )

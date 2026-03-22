@@ -18,6 +18,9 @@ class JournalFeedback(Base):
     journal_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("journals.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agents.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     agent_role: Mapped[str] = mapped_column(String(100), nullable=False, default="reflection_coach")
     response_text: Mapped[str] = mapped_column(Text, nullable=False)
     response_json: Mapped[Any] = mapped_column(JSON, nullable=True)

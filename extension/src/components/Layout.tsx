@@ -12,6 +12,8 @@ const navItems = [
   { label: "Home", path: "/tabs/index.html", icon: "🏠" },
   { label: "New Journal", path: "/tabs/index.html#/journal/new", icon: "✏️" },
   { label: "History", path: "/tabs/index.html#/history", icon: "📚" },
+  { label: "Goals", path: "/tabs/index.html#/goals", icon: "🎯" },
+  { label: "Agents", path: "/tabs/index.html#/agents", icon: "🤖" },
   { label: "Settings", path: "/tabs/index.html#/settings", icon: "⚙️" },
 ]
 

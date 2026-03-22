@@ -35,6 +35,9 @@
     "typescript": "^5.7.3"
   },
   "manifest": {
+    "action": {
+      "default_popup": "popup.html"
+    },
     "permissions": [
       "storage",
       "sidePanel",

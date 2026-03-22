@@ -40,15 +40,40 @@ export interface JournalDraft {
   updated_at: number // timestamp
 }
 
-// ---- Agent (placeholder for Phase 3) ----
-
 export interface Agent {
   id: string
   name: string
   role: string
   purpose: string
   tone: string
+  is_builtin: boolean
   is_active: boolean
+}
+
+export interface AgentListResponse {
+  agents: Agent[]
+}
+
+export interface AgentMessage {
+  id: string
+  thread_id: string
+  role: string
+  content: string
+  created_at: string
+}
+
+export interface AgentThread {
+  id: string
+  agent_id: string
+  journal_id: string | null
+  messages: AgentMessage[]
+  created_at: string
+}
+
+export interface AgentRespondRequest {
+  message: string
+  journal_id?: string
+  tz_offset_minutes?: number
 }
 
 // ---- API ----

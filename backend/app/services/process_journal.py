@@ -24,7 +24,12 @@ MAX_POLL_SECONDS = 30
 POLL_INTERVAL = 2.0
 
 
-async def process_journal(journal_id: str, user_id: str, user_name: str = "User"):
+async def process_journal(
+    journal_id: str,
+    user_id: str,
+    user_name: str = "User",
+    selected_agent_id: str | None = None,
+):
     """
     Full pipeline for processing a submitted journal entry.
 
@@ -33,7 +38,7 @@ async def process_journal(journal_id: str, user_id: str, user_name: str = "User"
     """
     async with SessionLocal() as db:
         try:
-            await _process(db, journal_id, user_id, user_name)
+            await _process(db, journal_id, user_id, user_name, selected_agent_id)
         except Exception as e:
             logger.exception("Failed to process journal %s: %s", journal_id, e)
             # Mark journal as failed
@@ -55,11 +60,63 @@ async def _get_journal(db: AsyncSession, journal_id: str) -> Journal | None:
     return result.scalar_one_or_none()
 
 
-async def _process(db: AsyncSession, journal_id: str, user_id: str, user_name: str):
+async def _load_agent(db: AsyncSession, agent_id: str | None):
+    """Load agent from DB, fallback to Reflection Coach."""
+    from app.models.agent import Agent
+
+    if agent_id:
+        result = await db.execute(
+            select(Agent).where(Agent.id == uuid.UUID(agent_id))
+        )
+        agent = result.scalar_one_or_none()
+        if agent:
+            return agent
+
+    # Fallback to built-in Reflection Coach
+    result = await db.execute(
+        select(Agent).where(Agent.role == "reflection_coach", Agent.is_builtin == True)
+    )
+    return result.scalar_one_or_none()
+
+
+async def _process(
+    db: AsyncSession,
+    journal_id: str,
+    user_id: str,
+    user_name: str,
+    selected_agent_id: str | None = None,
+):
     journal = await _get_journal(db, journal_id)
     if not journal:
         logger.error("Journal %s not found", journal_id)
         return
+
+    # Load the selected agent
+    agent = await _load_agent(db, selected_agent_id)
+    agent_config = None
+    agent_role = "reflection_coach"
+    agent_db_id = None
+
+    if agent:
+        agent_config = {
+            "name": agent.name,
+            "role": agent.role,
+            "purpose": agent.purpose,
+            "tone": agent.tone,
+        }
+        agent_role = agent.role
+        agent_db_id = agent.id
+        logger.info("Using agent '%s' for journal %s", agent.name, journal_id)
+
+    # Step 0: Auto-generate title if missing
+    if not journal.title and settings.OPENROUTER_API_KEY:
+        try:
+            title = await llm_service.generate_title(journal.raw_text)
+            journal.title = title
+            await db.commit()
+            logger.info("Auto-generated title for journal %s: %s", journal_id, title)
+        except Exception as e:
+            logger.warning("Failed to auto-generate title: %s", e)
 
     # Step 1: Submit to EverMemOS (if API key is configured)
     memories = []
@@ -110,16 +167,18 @@ async def _process(db: AsyncSession, journal_id: str, user_id: str, user_name: s
 
     # Step 4: Generate LLM feedback (if OpenRouter key is configured)
     if settings.OPENROUTER_API_KEY:
-        logger.info("Generating feedback for journal %s", journal_id)
+        logger.info("Generating feedback for journal %s with agent '%s'", journal_id, agent_role)
         result = await llm_service.generate_feedback(
             journal_text=journal.raw_text,
             memories=memories,
+            agent_config=agent_config,
         )
 
         # Step 5: Store feedback
         feedback = JournalFeedback(
             journal_id=journal.id,
-            agent_role="reflection_coach",
+            agent_id=agent_db_id,
+            agent_role=agent_role,
             response_text=result["response_text"],
             response_json=result.get("response_json"),
             retrieved_memories_json={"memories": memories} if memories else None,
@@ -129,8 +188,147 @@ async def _process(db: AsyncSession, journal_id: str, user_id: str, user_name: s
 
         journal.status = "processed"
         await db.commit()
-        logger.info("Journal %s processed successfully", journal_id)
+        logger.info("Journal %s processed successfully with agent '%s'", journal_id, agent_role)
+
+        # Step 5.5: Extract goals and tasks from journal
+        try:
+            extracted = await llm_service.extract_goals_tasks(journal.raw_text)
+            await _store_goals_tasks(
+                db, extracted, user_id=user_id, journal_id=journal_id
+            )
+        except Exception as e:
+            logger.warning("Goals/tasks extraction failed (non-fatal): %s", e)
+
+        # Step 6: Generate proactive check-in messages from all agents
+        await _generate_agent_checkins(
+            db, journal, user_id, memories
+        )
     else:
         logger.info("OpenRouter API key not configured, skipping feedback generation")
         journal.status = "submitted"
         await db.commit()
+
+
+async def _generate_agent_checkins(
+    db: AsyncSession,
+    journal: Journal,
+    user_id: str,
+    memories: list,
+):
+    """Generate proactive check-in messages from all built-in agents for this journal."""
+    from app.models.agent import Agent
+    from app.services import agent_service
+
+    result = await db.execute(
+        select(Agent).where(Agent.is_builtin == True, Agent.is_active == True)
+    )
+    all_agents = list(result.scalars().all())
+
+    async def _checkin_for_agent(agent: Agent):
+        try:
+            agent_config = {
+                "name": agent.name,
+                "role": agent.role,
+                "purpose": agent.purpose,
+                "tone": agent.tone,
+            }
+            checkin = await llm_service.generate_checkin_message(
+                journal_text=journal.raw_text,
+                memories=memories,
+                agent_config=agent_config,
+            )
+
+            # Create a journal-scoped thread and store the check-in message
+            thread = await agent_service.get_or_create_thread(
+                db,
+                user_id=uuid.UUID(user_id),
+                agent_id=agent.id,
+                journal_id=journal.id,
+            )
+            await agent_service.add_message(
+                db, thread.id, "assistant", checkin["response_text"]
+            )
+            logger.info(
+                "Agent '%s' sent check-in for journal %s",
+                agent.name,
+                str(journal.id),
+            )
+        except Exception as e:
+            logger.warning(
+                "Failed to generate check-in from '%s': %s", agent.name, e
+            )
+
+    # Run all check-in generations concurrently
+    await asyncio.gather(*[_checkin_for_agent(a) for a in all_agents])
+    logger.info("All agent check-ins completed for journal %s", str(journal.id))
+
+
+async def _store_goals_tasks(
+    db: AsyncSession,
+    extracted: dict,
+    user_id: str,
+    journal_id: str,
+):
+    """Store extracted goals and tasks in the database."""
+    from datetime import datetime, timezone
+    from app.models.goal import Goal
+    from app.models.task import Task
+
+    uid = uuid.UUID(user_id)
+    jid = uuid.UUID(journal_id)
+
+    def _parse_due_date(raw: str | None) -> datetime | None:
+        if not raw:
+            return None
+        try:
+            # Store at noon UTC so ±12h timezone shifts don't change the day
+            return datetime.strptime(raw, "%Y-%m-%d").replace(hour=12, tzinfo=timezone.utc)
+        except (ValueError, TypeError):
+            return None
+
+    for g in extracted.get("goals", []):
+        if not g.get("title"):
+            continue
+        recurrence = g.get("recurrence", "one_time")
+        if recurrence not in ("one_time", "recurring"):
+            recurrence = "one_time"
+        freq = g.get("recurrence_frequency")
+        if freq not in ("daily", "weekly", "monthly", "yearly", None):
+            freq = None
+        goal = Goal(
+            user_id=uid,
+            title=g["title"][:500],
+            description=g.get("description", ""),
+            source_journal_id=jid,
+            recurrence=recurrence,
+            recurrence_frequency=freq,
+            due_at=_parse_due_date(g.get("due_date")),
+        )
+        db.add(goal)
+
+    for t in extracted.get("tasks", []):
+        if not t.get("title"):
+            continue
+        recurrence = t.get("recurrence", "one_time")
+        if recurrence not in ("one_time", "recurring"):
+            recurrence = "one_time"
+        freq = t.get("recurrence_frequency")
+        if freq not in ("daily", "weekly", "monthly", "yearly", None):
+            freq = None
+        task = Task(
+            user_id=uid,
+            title=t["title"][:500],
+            source_journal_id=jid,
+            recurrence=recurrence,
+            recurrence_frequency=freq,
+            due_at=_parse_due_date(t.get("due_date")),
+        )
+        db.add(task)
+
+    await db.commit()
+    logger.info(
+        "Stored %d goals and %d tasks for journal %s",
+        len(extracted.get("goals", [])),
+        len(extracted.get("tasks", [])),
+        journal_id,
+    )

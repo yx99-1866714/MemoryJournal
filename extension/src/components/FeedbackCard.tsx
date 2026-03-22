@@ -14,6 +14,20 @@ const SECTION_LABELS: Record<string, { emoji: string; label: string }> = {
   supportive_observation: { emoji: "💛", label: "Observation" },
   next_step: { emoji: "🚀", label: "Next Step" },
   reflection_question: { emoji: "🤔", label: "Reflection Question" },
+  goals_identified: { emoji: "🎯", label: "Goals Identified" },
+  progress_update: { emoji: "📊", label: "Progress Update" },
+  accountability_question: { emoji: "✅", label: "Accountability Check" },
+  emotional_reflection: { emoji: "💭", label: "Emotional Reflection" },
+  compassionate_reflection: { emoji: "🌸", label: "Compassionate Reflection" },
+  self_care_suggestion: { emoji: "🫶", label: "Self-Care Suggestion" },
+  gentle_question: { emoji: "🕊️", label: "Gentle Question" },
+}
+
+const AGENT_DISPLAY: Record<string, { icon: string; name: string }> = {
+  reflection_coach: { icon: "🪞", name: "Reflection Coach" },
+  goal_secretary: { icon: "📋", name: "Goal Secretary" },
+  supportive_friend: { icon: "💛", name: "Supportive Friend" },
+  inner_caregiver: { icon: "🤗", name: "Inner Caregiver" },
 }
 
 const STATUS_MESSAGES: Record<string, { emoji: string; text: string }> = {
@@ -99,42 +113,14 @@ export default function FeedbackCard({ journalId, journalStatus }: Props) {
   // No feedback available
   if (!feedback) return null
 
-  // Render structured feedback
-  const sections = feedback.response_json
+  // Render feedback as plain text
   return (
-    <div className="mt-6 space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xl">🪞</span>
-        <h3 className="text-lg font-semibold text-surface-800">Reflection Coach</h3>
-        {feedback.model_name && (
-          <span className="text-xs text-surface-400 ml-auto">{feedback.model_name}</span>
-        )}
+    <div className="mt-6">
+      <div className="p-5 rounded-2xl bg-white border border-surface-200">
+        <p className="text-surface-700 leading-relaxed whitespace-pre-wrap">
+          {feedback.response_text}
+        </p>
       </div>
-
-      {sections ? (
-        Object.entries(SECTION_LABELS).map(([key, { emoji, label }]) => {
-          const content = sections[key as keyof typeof sections]
-          if (!content) return null
-          return (
-            <div
-              key={key}
-              className="p-4 rounded-xl bg-white border border-surface-200 hover:border-primary-200 transition-colors"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span>{emoji}</span>
-                <span className="text-sm font-semibold text-surface-600">{label}</span>
-              </div>
-              <p className="text-surface-700 leading-relaxed">{content}</p>
-            </div>
-          )
-        })
-      ) : (
-        <div className="p-4 rounded-xl bg-white border border-surface-200">
-          <p className="text-surface-700 leading-relaxed whitespace-pre-wrap">
-            {feedback.response_text}
-          </p>
-        </div>
-      )}
     </div>
   )
 }

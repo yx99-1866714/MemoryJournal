@@ -18,6 +18,7 @@ interface JournalStore {
     submit?: boolean
     source_surface?: string
     mood_label?: string
+    selected_agent_id?: string
   }) => Promise<Journal>
   updateJournal: (id: string, data: {
     title?: string

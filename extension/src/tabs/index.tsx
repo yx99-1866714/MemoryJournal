@@ -5,12 +5,14 @@ import "~src/style.css"
 
 import AuthForm from "~components/AuthForm"
 import Calendar from "~components/Calendar"
-import FeedbackCard from "~components/FeedbackCard"
+import ChatThread from "~components/ChatThread"
+import GoalsDashboard from "~components/GoalsDashboard"
+
 import JournalCard from "~components/JournalCard"
 import JournalEditor from "~components/JournalEditor"
 import Layout from "~components/Layout"
-import { apiGetJournalsByDate } from "~lib/api"
-import type { Journal } from "~lib/types"
+import { apiGetAgents, apiGetJournalsByDate } from "~lib/api"
+import type { Agent, Journal } from "~lib/types"
 import { useAuthStore } from "~store/authStore"
 import { useJournalStore } from "~store/journalStore"
 
@@ -43,11 +45,14 @@ function HomePage() {
           <h3 className="font-semibold text-lg text-surface-800">History</h3>
           <p className="text-surface-500 text-sm mt-1">{total} journal entries</p>
         </button>
-        <div className="p-6 rounded-2xl bg-white border border-surface-200 text-left opacity-60">
+        <button
+          onClick={() => navigate("/goals")}
+          className="p-6 rounded-2xl bg-white border border-surface-200 hover:border-primary-300 hover:shadow-md transition-all text-left"
+        >
           <span className="text-2xl mb-2 block">🎯</span>
           <h3 className="font-semibold text-lg text-surface-800">Goals</h3>
-          <p className="text-surface-400 text-sm mt-1">Coming in Phase 4</p>
-        </div>
+          <p className="text-surface-500 text-sm mt-1">Track your goals & tasks</p>
+        </button>
       </div>
 
       {/* Recent entries */}
@@ -110,17 +115,63 @@ function NewJournalPage() {
 function ViewJournalPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { currentJournal, loading, fetchJournal, deleteJournal, clearCurrent } = useJournalStore()
+  const { currentJournal, loading, fetchJournal, updateJournal, deleteJournal, clearCurrent } = useJournalStore()
+  const [isEditing, setIsEditing] = useState(false)
+  const [editTitle, setEditTitle] = useState("")
+  const [editContent, setEditContent] = useState("")
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (id) fetchJournal(id)
     return () => clearCurrent()
   }, [id])
 
+  // Auto-refresh journal while it's being processed (title, status)
+  useEffect(() => {
+    if (!id || !currentJournal) return
+    if (currentJournal.status !== "submitted") return
+    const interval = setInterval(() => fetchJournal(id), 3000)
+    return () => clearInterval(interval)
+  }, [id, currentJournal?.status])
+
+  // Sync edit fields when journal data loads or changes (only when not editing)
+  useEffect(() => {
+    if (currentJournal && !isEditing) {
+      setEditTitle(currentJournal.title || "")
+      setEditContent(currentJournal.raw_text || "")
+    }
+  }, [currentJournal, isEditing])
+
   const handleDelete = async () => {
     if (!id || !confirm("Delete this journal entry?")) return
     await deleteJournal(id)
     navigate("/history")
+  }
+
+  const handleStartEdit = () => {
+    setEditTitle(currentJournal?.title || "")
+    setEditContent(currentJournal?.raw_text || "")
+    setIsEditing(true)
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+  }
+
+  const handleSave = async () => {
+    if (!id) return
+    setSaving(true)
+    try {
+      await updateJournal(id, {
+        title: editTitle || undefined,
+        content: editContent,
+      })
+      setIsEditing(false)
+    } catch {
+      // error handled by store
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (loading || !currentJournal) {
@@ -147,10 +198,20 @@ function ViewJournalPage() {
             ← Back
           </button>
           <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-surface-900">
-                {currentJournal.title || "Untitled Entry"}
-              </h1>
+            <div className="flex-1 mr-4">
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Journal title..."
+                  className="text-2xl font-bold text-surface-900 bg-transparent border-b-2 border-primary-300 focus:border-primary-500 focus:outline-none w-full pb-1"
+                />
+              ) : (
+                <h1 className="text-2xl font-bold text-surface-900">
+                  {currentJournal.title || "Untitled Entry"}
+                </h1>
+              )}
               <p className="text-sm text-surface-400 mt-1">
                 {date.toLocaleDateString("en-US", {
                   weekday: "long",
@@ -167,21 +228,56 @@ function ViewJournalPage() {
               {currentJournal.mood_label && (
                 <span className="text-2xl">{currentJournal.mood_label}</span>
               )}
-              <button
-                onClick={handleDelete}
-                className="text-sm px-3 py-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
-              >
-                Delete
-              </button>
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="text-sm px-3 py-1.5 rounded-lg text-surface-500 hover:text-surface-700 hover:bg-surface-100 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="text-sm px-4 py-1.5 rounded-lg bg-primary-500 text-white hover:bg-primary-400 disabled:opacity-50 transition font-medium"
+                  >
+                    {saving ? "Saving..." : "Save"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleStartEdit}
+                    className="text-sm px-3 py-1.5 rounded-lg text-primary-600 hover:text-primary-700 hover:bg-primary-50 transition"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="text-sm px-3 py-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="prose prose-lg max-w-none">
-          <div className="p-6 rounded-2xl bg-white border border-surface-200 whitespace-pre-wrap text-surface-700 leading-relaxed">
-            {currentJournal.raw_text}
-          </div>
+          {isEditing ? (
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full p-6 rounded-2xl bg-white border border-primary-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none text-surface-700 leading-relaxed resize-y min-h-[200px]"
+              rows={Math.max(10, editContent.split("\n").length + 2)}
+            />
+          ) : (
+            <div className="p-6 rounded-2xl bg-white border border-surface-200 whitespace-pre-wrap text-surface-700 leading-relaxed">
+              {currentJournal.raw_text}
+            </div>
+          )}
         </div>
 
         {/* Metadata */}
@@ -196,7 +292,12 @@ function ViewJournalPage() {
         </div>
 
         {/* AI Feedback */}
-        <FeedbackCard journalId={currentJournal.id} journalStatus={currentJournal.status} />
+
+
+        {/* Follow-up Chat */}
+        {(currentJournal.status === "processed" || currentJournal.status === "submitted") && (
+          <ChatThread journalId={currentJournal.id} defaultAgentRole="reflection_coach" journalStatus={currentJournal.status} />
+        )}
       </div>
     </Layout>
   )
@@ -288,6 +389,88 @@ function HistoryPage() {
   )
 }
 
+// ---- Agents Page ----
+function AgentsPage() {
+  const [agents, setAgents] = useState<Agent[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    apiGetAgents()
+      .then((res) => setAgents(res.agents))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const ROLE_ICONS: Record<string, string> = {
+    reflection_coach: "🪞",
+    goal_secretary: "📋",
+    supportive_friend: "💛",
+    inner_caregiver: "🤗",
+  }
+
+  const ROLE_COLORS: Record<string, string> = {
+    reflection_coach: "from-violet-500 to-purple-600",
+    goal_secretary: "from-emerald-500 to-teal-600",
+    supportive_friend: "from-amber-400 to-orange-500",
+    inner_caregiver: "from-rose-400 to-pink-500",
+  }
+
+  return (
+    <Layout title="AI Agents">
+      <div className="max-w-3xl">
+        <p className="text-surface-500 mb-6">
+          These AI companions each bring a unique perspective to your journal reflections.
+        </p>
+
+        {loading ? (
+          <div className="text-center py-12 text-surface-400 animate-pulse">Loading agents...</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {agents.map((agent) => {
+              const icon = ROLE_ICONS[agent.role] || "🤖"
+              const gradient = ROLE_COLORS[agent.role] || "from-gray-400 to-gray-500"
+              return (
+                <div
+                  key={agent.id}
+                  className="rounded-2xl bg-white border border-surface-200 overflow-hidden hover:shadow-md transition-all"
+                >
+                  <div className={`h-2 bg-gradient-to-r ${gradient}`} />
+                  <div className="p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-3xl">{icon}</span>
+                      <div>
+                        <h3 className="font-semibold text-surface-900">{agent.name}</h3>
+                        <span className="text-xs text-surface-400">
+                          {agent.is_builtin ? "Built-in" : "Custom"}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-surface-600 leading-relaxed mb-2">
+                      {agent.purpose}
+                    </p>
+                    <p className="text-xs text-surface-400">
+                      Tone: <span className="text-surface-500">{agent.tone}</span>
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </Layout>
+  )
+}
+
+// ---- Goals Page ----
+function GoalsPage() {
+  return (
+    <Layout title="Goals & Tasks">
+      <GoalsDashboard />
+    </Layout>
+  )
+}
+
 // ---- Settings Page (Placeholder) ----
 function SettingsPage() {
   return (
@@ -330,6 +513,8 @@ function TabsApp() {
         <Route path="/journal/new" element={<NewJournalPage />} />
         <Route path="/journal/:id" element={<ViewJournalPage />} />
         <Route path="/history" element={<HistoryPage />} />
+        <Route path="/goals" element={<GoalsPage />} />
+        <Route path="/agents" element={<AgentsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </HashRouter>

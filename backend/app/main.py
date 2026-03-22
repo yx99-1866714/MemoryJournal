@@ -4,10 +4,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, journals
+from app.api import agents, auth, goals, journals
 from app.config import settings
-from app.db import engine, Base
-from app.models import User, Journal  # noqa: F401 — register models with Base.metadata
+from app.db import engine, Base, SessionLocal
+from app.models import User, Journal, Agent, AgentThread, AgentMessage  # noqa: F401 — register models
 
 # Configure logging for app modules
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
@@ -19,6 +19,10 @@ async def lifespan(app: FastAPI):
     # Create tables on startup (dev convenience; use Alembic migrations in production)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    # Seed built-in agents
+    from app.services.agent_service import seed_builtin_agents
+    async with SessionLocal() as db:
+        await seed_builtin_agents(db)
     yield
     await engine.dispose()
 
@@ -45,6 +49,8 @@ app.add_middleware(
 # Register routers
 app.include_router(auth.router)
 app.include_router(journals.router)
+app.include_router(agents.router)
+app.include_router(goals.router)
 
 
 @app.get("/health")

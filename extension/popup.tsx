@@ -1,15 +1,26 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 import "~src/style.css"
 
+import type { GoalsSummary } from "~lib/api"
+import { apiGetGoalsSummary } from "~lib/api"
 import { useAuthStore } from "~store/authStore"
 
 function Popup() {
   const { user, loading, init } = useAuthStore()
+  const [summary, setSummary] = useState<GoalsSummary | null>(null)
 
   useEffect(() => {
     init()
   }, [])
+
+  useEffect(() => {
+    if (user) {
+      apiGetGoalsSummary()
+        .then(setSummary)
+        .catch(() => {})
+    }
+  }, [user])
 
   const openFullPage = () => {
     chrome.tabs.create({ url: chrome.runtime.getURL("/tabs/index.html") })
@@ -19,9 +30,20 @@ function Popup() {
     chrome.tabs.create({ url: chrome.runtime.getURL("/tabs/index.html#/journal/new") })
   }
 
-  const openSidePanel = () => {
-    // Side panel opens via the action in manifest; this is a fallback
-    chrome.sidePanel?.open?.({ windowId: undefined as any })
+  const openGoals = () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("/tabs/index.html#/goals") })
+  }
+
+  const openSidePanel = async () => {
+    const win = await chrome.windows.getCurrent()
+    await chrome.sidePanel.setOptions({ path: "sidepanel.html" })
+    chrome.sidePanel?.open?.({ windowId: win.id! })
+  }
+
+  const openChatPanel = async () => {
+    const win = await chrome.windows.getCurrent()
+    await chrome.sidePanel.setOptions({ path: "sidepanel.html#chat" })
+    chrome.sidePanel?.open?.({ windowId: win.id! })
   }
 
   if (loading) {
@@ -60,6 +82,51 @@ function Popup() {
         </div>
       </div>
 
+      {/* Goal/Task Summary Widget */}
+      {summary && (summary.active_goals > 0 || summary.open_tasks > 0) && (
+        <div
+          onClick={openGoals}
+          className="mb-4 p-3 rounded-xl bg-white/10 border border-white/10 cursor-pointer hover:bg-white/15 transition"
+        >
+          <div className="flex gap-4 mb-2">
+            <div className="text-center flex-1">
+              <div className="text-xl font-bold text-white">{summary.active_goals}</div>
+              <div className="text-[10px] text-primary-200/60 uppercase tracking-wide">Goals</div>
+            </div>
+            <div className="w-px bg-white/15" />
+            <div className="text-center flex-1">
+              <div className="text-xl font-bold text-white">{summary.open_tasks}</div>
+              <div className="text-[10px] text-primary-200/60 uppercase tracking-wide">Tasks</div>
+            </div>
+          </div>
+          {/* Urgent task badges */}
+          {(summary.overdue_tasks > 0 || summary.due_today_tasks > 0) && (
+            <div className="flex gap-2 mt-2 pt-2 border-t border-white/10">
+              {summary.overdue_tasks > 0 && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 font-medium">
+                  ⚠️ {summary.overdue_tasks} overdue
+                </span>
+              )}
+              {summary.due_today_tasks > 0 && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-medium">
+                  📅 {summary.due_today_tasks} due today
+                </span>
+              )}
+            </div>
+          )}
+          {summary.recent_tasks.length > 0 && (
+            <div className="space-y-1 mt-2 pt-2 border-t border-white/10">
+              {summary.recent_tasks.slice(0, 3).map((t) => (
+                <div key={t.id} className="flex items-center gap-2 text-xs text-primary-100/80">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                  <span className="truncate">{t.title}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="space-y-2.5">
         <button
           onClick={openNewJournal}
@@ -74,17 +141,23 @@ function Popup() {
           <span>📚</span> View History
         </button>
         <button
+          onClick={openGoals}
+          className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-all flex items-center justify-center gap-2 border border-white/10"
+        >
+          <span>🎯</span> Goals & Tasks
+        </button>
+        <button
           onClick={openSidePanel}
           className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-all flex items-center justify-center gap-2 border border-white/10"
         >
           <span>📝</span> Quick Entry (Side Panel)
         </button>
-      </div>
-
-      <div className="mt-4 pt-4 border-t border-white/10">
-        <p className="text-xs text-primary-200/50 text-center">
-          Today's reminders coming soon
-        </p>
+        <button
+          onClick={openChatPanel}
+          className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-all flex items-center justify-center gap-2 border border-white/10"
+        >
+          <span>💬</span> AI Chat (Side Panel)
+        </button>
       </div>
     </div>
   )

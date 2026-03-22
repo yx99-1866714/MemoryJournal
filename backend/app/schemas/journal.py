@@ -9,6 +9,7 @@ class JournalCreate(BaseModel):
     submit: bool = False
     source_surface: str | None = None  # popup | sidepanel | fullpage
     mood_label: str | None = None
+    selected_agent_id: str | None = None
 
 
 class JournalUpdate(BaseModel):

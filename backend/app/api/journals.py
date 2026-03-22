@@ -54,6 +54,7 @@ async def create_journal(
             process_journal,
             journal_id=str(journal.id),
             user_id=user_id,
+            selected_agent_id=body.selected_agent_id,
         )
 
     return _journal_to_response(journal)
@@ -79,12 +80,14 @@ async def list_journals(
 async def get_journal_dates(
     year: int = Query(...),
     month: int = Query(..., ge=1, le=12),
+    tz_offset: int = Query(0),
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """Return day-of-month numbers that have journal entries for a given year/month."""
     days = await journal_service.get_journal_dates_for_month(
-        db, user_id=uuid.UUID(user_id), year=year, month=month
+        db, user_id=uuid.UUID(user_id), year=year, month=month,
+        tz_offset_minutes=tz_offset,
     )
     return days
 
@@ -94,12 +97,14 @@ async def get_journals_by_date(
     year: int = Query(...),
     month: int = Query(..., ge=1, le=12),
     day: int = Query(..., ge=1, le=31),
+    tz_offset: int = Query(0),
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
     """Return all journals for a specific date."""
     journals = await journal_service.get_journals_by_date(
-        db, user_id=uuid.UUID(user_id), year=year, month=month, day=day
+        db, user_id=uuid.UUID(user_id), year=year, month=month, day=day,
+        tz_offset_minutes=tz_offset,
     )
     return JournalListResponse(
         journals=[_journal_to_response(j) for j in journals],
