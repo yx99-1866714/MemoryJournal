@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: memoryjournal-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: memoryjournal-db
+          property: connectionString
+        # Render provides a standard postgres:// URL — we need asyncpg format.
+        # Override this manually in the Render dashboard with the asyncpg URL:
+        # postgresql+asyncpg://user:pass@host/dbname
+      - key: JWT_SECRET
+        generateValue: true
+      - key: EVERMEMOS_API_KEY
+        sync: false  # set manually in dashboard
+      - key: EVERMEMOS_API_URL
+        value: https://api.evermemos.com
+      - key: OPENROUTER_API_KEY
+        sync: false  # set manually in dashboard
+      - key: LLM_MODEL
+        value: x-ai/grok-4-fast
+    healthCheckPath: /health
+
+databases:
+  - name: memoryjournal-db
+    plan: free
+    databaseName: memoryjournal
+    user: memoryjournal
