@@ -1,4 +1,5 @@
-import type { AgentListResponse, AgentMessage, AgentRespondRequest, AgentThread, FeedbackListResponse, Journal, JournalListResponse, ProcessingStatus, TokenResponse, User } from "./types"
+import type { Agent, AgentListResponse, AgentMessage, AgentRespondRequest, AgentThread, FeedbackListResponse, Journal, JournalListResponse, ProcessingStatus, TokenResponse, User } from "./types"
+import { getStoredToken } from "./tokenStorage"
 
 const API_BASE = "http://localhost:8000"
 
@@ -6,8 +7,7 @@ async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const stored = await chrome.storage.local.get("token")
-  const token = stored.token as string | undefined
+  const token = await getStoredToken()
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -227,4 +227,87 @@ export async function apiDeleteGoal(goalId: string): Promise<void> {
 
 export async function apiDeleteTask(taskId: string): Promise<void> {
   return request<void>(`/goals/tasks/${taskId}`, { method: "DELETE" })
+}
+
+// ---- Agent CRUD ----
+
+export async function apiCreateAgent(data: {
+  name: string; purpose: string; tone: string; system_prompt?: string;
+}): Promise<Agent> {
+  return request<Agent>("/agents/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function apiUpdateAgent(agentId: string, data: {
+  name?: string; purpose?: string; tone?: string;
+  system_prompt?: string; is_active?: boolean;
+}): Promise<Agent> {
+  return request<Agent>(`/agents/${agentId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function apiDeleteAgent(agentId: string): Promise<void> {
+  return request<void>(`/agents/${agentId}`, { method: "DELETE" })
+}
+
+export async function apiToggleAgent(agentId: string): Promise<Agent> {
+  return request<Agent>(`/agents/${agentId}/toggle`, { method: "PATCH" })
+}
+
+// ---- Export & Account ----
+
+export async function apiExportJournals(): Promise<void> {
+  const token = await getStoredToken()
+  const res = await fetch(`${API_BASE}/journals/export`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  if (!res.ok) throw new Error("Export failed")
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = "MemoryJournal_export.json"
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+export async function apiDeleteAccount(): Promise<void> {
+  return request<void>("/auth/account", { method: "DELETE" })
+}
+
+// ---- Import ----
+
+export interface ImportResult {
+  imported: number
+  skipped: number
+  total: number
+}
+
+export async function apiImportJournals(data: unknown): Promise<ImportResult> {
+  return request<ImportResult>("/journals/import", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+}
+
+// ---- Insights ----
+
+export interface InsightsData {
+  period: string
+  journal_count: number
+  summary: string
+  themes: string[]
+  mood_trend: string
+  accomplishments: string[]
+  reflection_prompts: string[]
+}
+
+export async function apiGetInsights(period: "weekly" | "monthly"): Promise<InsightsData> {
+  return request<InsightsData>(`/insights/${period}`)
 }

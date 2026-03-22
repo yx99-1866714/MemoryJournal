@@ -60,6 +60,115 @@ async def create_journal(
     return _journal_to_response(journal)
 
 
+@router.get("/export")
+async def export_journals(
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export all journals as a JSON download."""
+    from fastapi.responses import JSONResponse
+
+    journals, _ = await journal_service.get_journals(
+        db, user_id=uuid.UUID(user_id), limit=10000, offset=0,
+    )
+    data = [
+        {
+            "id": str(j.id),
+            "title": j.title,
+            "content": j.raw_text,
+            "status": j.status,
+            "word_count": j.word_count,
+            "mood": j.mood_label,
+            "source": j.source_surface,
+            "created_at": j.created_at.isoformat() if j.created_at else None,
+            "submitted_at": j.submitted_at.isoformat() if j.submitted_at else None,
+        }
+        for j in journals
+    ]
+    return JSONResponse(
+        content={"journals": data, "total": len(data)},
+        headers={"Content-Disposition": "attachment; filename=MemoryJournal_export.json"},
+    )
+
+
+@router.post("/import")
+async def import_journals(
+    body: dict,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Import journals from exported JSON. Skips duplicates (matching content)."""
+    from datetime import datetime, timezone
+    from hashlib import sha256
+    from app.models.journal import Journal as JournalModel
+    from app.services.process_journal import process_journal
+
+    uid = uuid.UUID(user_id)
+    entries = body.get("journals", [])
+    if not entries:
+        return {"imported": 0, "skipped": 0, "total": 0}
+
+    # Build a set of content hashes for existing journals to detect duplicates
+    existing, _ = await journal_service.get_journals(db, uid, limit=10000, offset=0)
+    existing_hashes = {
+        sha256((j.raw_text or "").strip().encode()).hexdigest()
+        for j in existing
+    }
+
+    imported = 0
+    skipped = 0
+
+    for entry in entries:
+        content = entry.get("content", "").strip()
+        if not content:
+            skipped += 1
+            continue
+
+        content_hash = sha256(content.encode()).hexdigest()
+        if content_hash in existing_hashes:
+            skipped += 1
+            continue
+
+        # Parse created_at from export if available
+        created_at = None
+        if entry.get("created_at"):
+            try:
+                created_at = datetime.fromisoformat(entry["created_at"])
+                if created_at.tzinfo is None:
+                    created_at = created_at.replace(tzinfo=timezone.utc)
+            except (ValueError, TypeError):
+                created_at = None
+
+        journal = JournalModel(
+            user_id=uid,
+            title=entry.get("title"),
+            raw_text=content,
+            status="submitted",
+            word_count=len(content.split()),
+            mood_label=entry.get("mood"),
+            source_surface=entry.get("source", "import"),
+            created_at=created_at or datetime.now(timezone.utc),
+            submitted_at=datetime.now(timezone.utc),
+        )
+        db.add(journal)
+        await db.flush()
+        await db.refresh(journal)
+
+        # Queue background processing (EverMemOS + goals/tasks extraction)
+        background_tasks.add_task(
+            process_journal,
+            journal_id=str(journal.id),
+            user_id=user_id,
+        )
+
+        existing_hashes.add(content_hash)
+        imported += 1
+
+    await db.commit()
+    return {"imported": imported, "skipped": skipped, "total": len(entries)}
+
+
 @router.get("/", response_model=JournalListResponse)
 async def list_journals(
     user_id: str = Depends(get_current_user_id),
@@ -197,6 +306,10 @@ async def update_journal(
     journal = await journal_service.get_journal(db, uuid.UUID(journal_id), uuid.UUID(user_id))
     if journal is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journal not found")
+        
+    was_processed = journal.status in ("processed", "submitted")
+    content_changed = body.content is not None
+
     updated = await journal_service.update_journal(
         db,
         journal,
@@ -206,8 +319,12 @@ async def update_journal(
         mood_label=body.mood_label,
     )
 
-    # Trigger processing if a draft is being submitted
-    if body.submit and updated.status == "submitted":
+    # Trigger processing if a draft is being submitted OR a processed journal is edited
+    should_process = (body.submit and updated.status == "submitted") or (was_processed and content_changed)
+
+    if should_process:
+        updated.status = "submitted"
+        await db.commit()
         background_tasks.add_task(
             process_journal,
             journal_id=str(updated.id),

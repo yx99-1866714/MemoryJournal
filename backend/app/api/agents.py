@@ -12,9 +12,11 @@ from app.config import settings
 from app.db import get_db
 from app.models.journal import Journal
 from app.schemas.agent import (
+    AgentCreateRequest,
     AgentListResponse,
     AgentRespondRequest,
     AgentResponse,
+    AgentUpdateRequest,
     MessageResponse,
     ThreadResponse,
 )
@@ -47,6 +49,112 @@ async def get_agent(
         raise HTTPException(status_code=404, detail="Agent not found")
     return AgentResponse.model_validate(agent)
 
+
+@router.post("/", response_model=AgentResponse, status_code=201)
+async def create_agent(
+    body: AgentCreateRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a custom user-owned agent."""
+    from app.models.agent import Agent
+    import re
+
+    # Generate a unique role slug from the name
+    role_slug = re.sub(r'[^a-z0-9]+', '_', body.name.lower()).strip('_')
+    role_slug = f"custom_{role_slug}_{uuid.uuid4().hex[:6]}"
+
+    agent = Agent(
+        user_id=uuid.UUID(user_id),
+        name=body.name,
+        role=role_slug,
+        purpose=body.purpose,
+        tone=body.tone,
+        system_prompt=body.system_prompt,
+        is_builtin=False,
+        is_active=True,
+    )
+    db.add(agent)
+    await db.commit()
+    await db.refresh(agent)
+    return AgentResponse.model_validate(agent)
+
+
+@router.patch("/{agent_id}", response_model=AgentResponse)
+async def update_agent(
+    agent_id: str,
+    body: AgentUpdateRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update a custom agent. Built-in agents cannot be edited."""
+    agent = await agent_service.get_agent(db, uuid.UUID(agent_id))
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    if agent.is_builtin:
+        raise HTTPException(status_code=403, detail="Built-in agents cannot be edited")
+    if agent.user_id != uuid.UUID(user_id):
+        raise HTTPException(status_code=403, detail="Not your agent")
+
+    for field in ["name", "purpose", "tone", "system_prompt", "is_active"]:
+        val = getattr(body, field, None)
+        if val is not None:
+            setattr(agent, field, val)
+
+    await db.commit()
+    await db.refresh(agent)
+    return AgentResponse.model_validate(agent)
+
+
+@router.patch("/{agent_id}/toggle", response_model=AgentResponse)
+async def toggle_agent(
+    agent_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Toggle agent active/inactive. Works for both built-in and custom agents."""
+    agent = await agent_service.get_agent(db, uuid.UUID(agent_id))
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    # Custom agents must belong to this user
+    if not agent.is_builtin and agent.user_id != uuid.UUID(user_id):
+        raise HTTPException(status_code=403, detail="Not your agent")
+
+    agent.is_active = not agent.is_active
+    await db.commit()
+    await db.refresh(agent)
+    return AgentResponse.model_validate(agent)
+
+
+@router.delete("/{agent_id}", status_code=204)
+async def delete_agent(
+    agent_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a custom agent and its threads/messages."""
+    from app.models.agent_thread import AgentMessage, AgentThread
+
+    agent = await agent_service.get_agent(db, uuid.UUID(agent_id))
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    if agent.is_builtin:
+        raise HTTPException(status_code=403, detail="Built-in agents cannot be deleted")
+    if agent.user_id != uuid.UUID(user_id):
+        raise HTTPException(status_code=403, detail="Not your agent")
+
+    # Cascade delete threads and messages
+    threads_result = await db.execute(
+        select(AgentThread).where(AgentThread.agent_id == uuid.UUID(agent_id))
+    )
+    for thread in threads_result.scalars().all():
+        await db.execute(
+            delete(AgentMessage).where(AgentMessage.thread_id == thread.id)
+        )
+        await db.delete(thread)
+
+    await db.delete(agent)
+    await db.commit()
 
 @router.post("/{agent_id}/respond", response_model=MessageResponse)
 async def agent_respond(

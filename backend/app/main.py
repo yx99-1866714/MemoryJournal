@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import agents, auth, goals, journals
+from app.api import agents, auth, goals, insights, journals
 from app.config import settings
 from app.db import engine, Base, SessionLocal
 from app.models import User, Journal, Agent, AgentThread, AgentMessage  # noqa: F401 — register models
@@ -51,6 +51,7 @@ app.include_router(auth.router)
 app.include_router(journals.router)
 app.include_router(agents.router)
 app.include_router(goals.router)
+app.include_router(insights.router)
 
 
 @app.get("/health")

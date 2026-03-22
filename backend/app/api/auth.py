@@ -55,3 +55,54 @@ async def get_me(
 async def refresh_token(user_id: str = Depends(get_current_user_id)):
     token = auth_service.create_access_token(user_id)
     return TokenResponse(access_token=token)
+
+
+@router.delete("/account", status_code=204)
+async def delete_account(
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Permanently delete the user account and all associated data."""
+    from sqlalchemy import delete
+    from app.models.journal import Journal
+    from app.models.journal_feedback import JournalFeedback
+    from app.models.goal import Goal
+    from app.models.task import Task
+    from app.models.agent import Agent
+    from app.models.agent_thread import AgentThread, AgentMessage
+    from app.models.user import User
+
+    uid = uuid.UUID(user_id)
+
+    # Delete in dependency order: messages → threads → feedback → journals → tasks → goals → agents → user
+    # 1. Agent messages (via threads)
+    threads = await db.execute(select(AgentThread.id).where(AgentThread.user_id == uid))
+    thread_ids = [t[0] for t in threads.all()]
+    if thread_ids:
+        await db.execute(delete(AgentMessage).where(AgentMessage.thread_id.in_(thread_ids)))
+
+    # 2. Agent threads
+    await db.execute(delete(AgentThread).where(AgentThread.user_id == uid))
+
+    # 3. Journal feedback
+    journals = await db.execute(select(Journal.id).where(Journal.user_id == uid))
+    journal_ids = [j[0] for j in journals.all()]
+    if journal_ids:
+        await db.execute(delete(JournalFeedback).where(JournalFeedback.journal_id.in_(journal_ids)))
+
+    # 4. Journals
+    await db.execute(delete(Journal).where(Journal.user_id == uid))
+
+    # 5. Tasks
+    await db.execute(delete(Task).where(Task.user_id == uid))
+
+    # 6. Goals
+    await db.execute(delete(Goal).where(Goal.user_id == uid))
+
+    # 7. Custom agents
+    await db.execute(delete(Agent).where(Agent.user_id == uid))
+
+    # 8. User
+    await db.execute(delete(User).where(User.id == uid))
+
+    await db.commit()

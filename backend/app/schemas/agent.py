@@ -22,6 +22,21 @@ class AgentListResponse(BaseModel):
     agents: list[AgentResponse]
 
 
+class AgentCreateRequest(BaseModel):
+    name: str
+    purpose: str
+    tone: str
+    system_prompt: str | None = None
+
+
+class AgentUpdateRequest(BaseModel):
+    name: str | None = None
+    purpose: str | None = None
+    tone: str | None = None
+    system_prompt: str | None = None
+    is_active: bool | None = None
+
+
 # ---- Thread & Messages ----
 
 class AgentRespondRequest(BaseModel):

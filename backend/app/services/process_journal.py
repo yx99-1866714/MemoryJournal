@@ -271,11 +271,16 @@ async def _store_goals_tasks(
 ):
     """Store extracted goals and tasks in the database."""
     from datetime import datetime, timezone
+    from sqlalchemy import delete
     from app.models.goal import Goal
     from app.models.task import Task
 
     uid = uuid.UUID(user_id)
     jid = uuid.UUID(journal_id)
+
+    # Delete any existing goals and tasks for this journal (for re-processing edits)
+    await db.execute(delete(Goal).where(Goal.source_journal_id == jid))
+    await db.execute(delete(Task).where(Task.source_journal_id == jid))
 
     def _parse_due_date(raw: str | None) -> datetime | None:
         if not raw:

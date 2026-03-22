@@ -1,27 +1,9 @@
 import { apiGetMe, apiLogin, apiRefreshToken, apiRegister } from "./api"
 import type { TokenResponse, User } from "./types"
+import { storeToken, clearToken, getStoredToken } from "./tokenStorage"
 
-/**
- * Store the JWT token in chrome.storage.local.
- */
-async function storeToken(token: string): Promise<void> {
-  await chrome.storage.local.set({ token })
-}
-
-/**
- * Clear the stored token.
- */
-async function clearToken(): Promise<void> {
-  await chrome.storage.local.remove("token")
-}
-
-/**
- * Get the stored token.
- */
-export async function getStoredToken(): Promise<string | null> {
-  const result = await chrome.storage.local.get("token")
-  return (result.token as string) || null
-}
+// Re-export for backwards compatibility
+export { getStoredToken }
 
 /**
  * Register a new user, store token, and return user info.

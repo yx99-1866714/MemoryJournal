@@ -8,6 +8,8 @@ interface ChatThreadProps {
   defaultAgentRole?: string
   /** Current journal processing status */
   journalStatus?: string
+  /** Optional custom styling classes */
+  className?: string
 }
 
 const ROLE_ICONS: Record<string, string> = {
@@ -17,24 +19,26 @@ const ROLE_ICONS: Record<string, string> = {
   inner_caregiver: "🤗",
 }
 
-export default function ChatThread({ journalId, defaultAgentRole, journalStatus }: ChatThreadProps) {
+export default function ChatThread({ journalId, defaultAgentRole, journalStatus, className }: ChatThreadProps) {
   const [agents, setAgents] = useState<Agent[]>([])
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [messages, setMessages] = useState<AgentMessage[]>([])
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isProcessing = journalStatus && journalStatus !== "processed" && journalStatus !== "failed"
 
   // Load agents
   useEffect(() => {
     apiGetAgents()
       .then((res) => {
-        setAgents(res.agents)
+        const activeAgents = res.agents.filter((a: Agent) => a.is_active)
+        setAgents(activeAgents)
         const match = defaultAgentRole
-          ? res.agents.find((a) => a.role === defaultAgentRole)
+          ? activeAgents.find((a: Agent) => a.role === defaultAgentRole)
           : null
-        setSelectedAgent(match || res.agents[0] || null)
+        setSelectedAgent(match || activeAgents[0] || null)
       })
       .catch(() => {})
   }, [defaultAgentRole])
@@ -115,9 +119,9 @@ export default function ChatThread({ journalId, defaultAgentRole, journalStatus 
   if (agents.length === 0) return null
 
   return (
-    <div className="mt-6 rounded-xl bg-white border border-surface-200 overflow-hidden">
+    <div className={`flex flex-col bg-white border border-surface-200 overflow-hidden shadow-sm rounded-xl ${className || "mt-6"}`}>
       {/* Agent selector */}
-      <div className="flex gap-1 px-3 py-2 border-b border-surface-100 bg-surface-50/50 overflow-x-auto">
+      <div className="flex-shrink-0 flex gap-1 px-3 py-2 border-b border-surface-100 bg-surface-50/50 overflow-x-auto">
         {agents.map((agent) => {
           const isSelected = selectedAgent?.id === agent.id
           const icon = ROLE_ICONS[agent.role] || "🤖"
@@ -141,7 +145,7 @@ export default function ChatThread({ journalId, defaultAgentRole, journalStatus 
       </div>
 
       {/* Messages */}
-      <div className="max-h-80 overflow-y-auto px-4 py-3 space-y-3">
+      <div className="flex-1 min-h-[150px] overflow-y-auto px-4 py-3 space-y-3">
         {messages.length === 0 && isProcessing && (
           <div className="text-center py-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 text-primary-600 text-sm animate-pulse">
@@ -191,9 +195,10 @@ export default function ChatThread({ journalId, defaultAgentRole, journalStatus 
       </div>
 
       {/* Input */}
-      <div className="px-3 py-2.5 border-t border-surface-100 bg-surface-50/50">
-        <div className="flex gap-2">
+      <div className="flex-shrink-0 px-3 py-2.5 border-t border-surface-100 bg-surface-50/50">
+        <div className="flex gap-2 items-end">
           <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -201,7 +206,7 @@ export default function ChatThread({ journalId, defaultAgentRole, journalStatus 
             rows={1}
             className="flex-1 resize-none rounded-xl border border-surface-200 px-3.5 py-2 text-sm
               focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400
-              placeholder:text-surface-400 transition"
+              placeholder:text-surface-400 transition max-h-[150px] overflow-y-auto"
           />
           <button
             onClick={handleSend}

@@ -142,10 +142,9 @@ async def seed_builtin_agents(db: AsyncSession) -> None:
 
 
 async def get_agents(db: AsyncSession, user_id: uuid.UUID) -> list[Agent]:
-    """Get all active agents: built-in + user's custom agents."""
+    """Get all agents: built-in + user's custom agents (including inactive)."""
     result = await db.execute(
         select(Agent).where(
-            Agent.is_active == True,
             (Agent.is_builtin == True) | (Agent.user_id == user_id),
         ).order_by(Agent.is_builtin.desc(), Agent.created_at)
     )
