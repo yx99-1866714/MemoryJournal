@@ -1,7 +1,10 @@
 import type { Agent, AgentListResponse, AgentMessage, AgentRespondRequest, AgentThread, FeedbackListResponse, Journal, JournalListResponse, ProcessingStatus, TokenResponse, User } from "./types"
 import { getStoredToken } from "./tokenStorage"
 
-const API_BASE = "http://localhost:8000"
+//const API_BASE = "http://localhost:8000"
+const API_BASE = process.env.NODE_ENV === "development"
+  ? "http://localhost:8000"
+  : "https://memoryjournal.onrender.com"
 
 async function request<T>(
   path: string,

@@ -1,9 +1,12 @@
-export {}
+export { }
 
 // Background service worker
 // Handles extension lifecycle events and task reminders
 
-const API_BASE = "http://localhost:8000"
+// const API_BASE = "http://localhost:8000"
+const API_BASE = process.env.NODE_ENV === "development"
+  ? "http://localhost:8000"
+  : "https://memoryjournal.onrender.com"
 const ALARM_NAME = "check-reminders"
 const CHECK_INTERVAL_MINUTES = 30
 
@@ -80,8 +83,8 @@ async function checkReminders() {
         reminder.urgency === "overdue"
           ? "⚠️ OVERDUE"
           : reminder.urgency === "today"
-          ? "📅 Due Today"
-          : "🔔 Due Tomorrow"
+            ? "📅 Due Today"
+            : "🔔 Due Tomorrow"
 
       const dueStr = reminder.due_at
         ? new Date(reminder.due_at).toLocaleDateString()
