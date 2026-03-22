@@ -48,6 +48,7 @@ export interface Agent {
   tone: string
   is_builtin: boolean
   is_active: boolean
+  unread_count: number
 }
 
 export interface AgentListResponse {

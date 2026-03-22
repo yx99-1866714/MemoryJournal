@@ -28,6 +28,7 @@ chrome.runtime.onStartup.addListener(() => {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === ALARM_NAME || alarm.name === "initial-reminder-check") {
     await checkReminders()
+    await checkUnreadMessages()
   }
 })
 
@@ -48,7 +49,6 @@ async function checkReminders() {
     const stored = await chrome.storage.local.get("token")
     const token = stored.token as string | undefined
     if (!token) {
-      // Not logged in, clear badge
       chrome.action.setBadgeText({ text: "" })
       return
     }
@@ -73,14 +73,6 @@ async function checkReminders() {
       urgency: "overdue" | "today" | "tomorrow"
       goal_id: string | null
     }>
-
-    // Update badge count
-    if (reminders.length > 0) {
-      chrome.action.setBadgeText({ text: String(reminders.length) })
-      chrome.action.setBadgeBackgroundColor({ color: "#EF4444" }) // red
-    } else {
-      chrome.action.setBadgeText({ text: "" })
-    }
 
     // Send Chrome notifications for each reminder
     for (const reminder of reminders) {
@@ -108,5 +100,40 @@ async function checkReminders() {
     console.log(`Reminder check: ${reminders.length} reminder(s) sent`)
   } catch (err) {
     console.warn("Reminder check error:", err)
+  }
+}
+
+// ── Unread Messages Check ────────────────────────────
+
+async function checkUnreadMessages() {
+  try {
+    const stored = await chrome.storage.local.get("token")
+    const token = stored.token as string | undefined
+    if (!token) return
+
+    const res = await fetch(`${API_BASE}/agents/unread-total`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    if (!res.ok) return
+
+    const data = await res.json()
+    const unreadTotal = data.unread_total as number
+
+    // Update badge with unread count (overrides reminder badge)
+    if (unreadTotal > 0) {
+      chrome.action.setBadgeText({ text: String(unreadTotal) })
+      chrome.action.setBadgeBackgroundColor({ color: "#EF4444" }) // red
+    } else {
+      // Only clear badge if no reminders either
+      chrome.action.setBadgeText({ text: "" })
+    }
+
+    console.log(`Unread check: ${unreadTotal} unread message(s)`)
+  } catch (err) {
+    console.warn("Unread check error:", err)
   }
 }

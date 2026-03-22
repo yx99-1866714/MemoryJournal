@@ -1,5 +1,6 @@
-import type { ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 
+import { apiGetUnreadTotal } from "~lib/api"
 import { useAuthStore } from "~store/authStore"
 
 interface Props {
@@ -20,6 +21,15 @@ const navItems = [
 
 export default function Layout({ children, title, showNav = true }: Props) {
   const { user, logout } = useAuthStore()
+  const [unreadTotal, setUnreadTotal] = useState(0)
+
+  useEffect(() => {
+    if (user) {
+      apiGetUnreadTotal()
+        .then((res) => setUnreadTotal(res.unread_total))
+        .catch(() => {})
+    }
+  }, [user])
 
   const navigateTo = (path: string) => {
     window.location.href = chrome.runtime.getURL(path)
@@ -44,10 +54,15 @@ export default function Layout({ children, title, showNav = true }: Props) {
                   <button
                     key={item.path}
                     onClick={() => navigateTo(item.path)}
-                    className="px-3 py-1.5 rounded-lg text-sm text-surface-600 hover:text-primary-600 hover:bg-primary-50 transition-all"
+                    className="relative px-3 py-1.5 rounded-lg text-sm text-surface-600 hover:text-primary-600 hover:bg-primary-50 transition-all"
                   >
                     <span className="mr-1">{item.icon}</span>
                     {item.label}
+                    {item.label === "Chat" && unreadTotal > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                        {unreadTotal > 9 ? "9+" : unreadTotal}
+                      </span>
+                    )}
                   </button>
                 ))}
               </nav>

@@ -14,6 +14,7 @@ class AgentResponse(BaseModel):
     tone: str
     is_builtin: bool
     is_active: bool
+    unread_count: int = 0
 
     model_config = {"from_attributes": True}
 

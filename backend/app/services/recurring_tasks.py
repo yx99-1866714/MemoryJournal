@@ -111,3 +111,56 @@ async def generate_recurring_tasks(db: AsyncSession, user_id: uuid.UUID) -> int:
         logger.info("Generated %d recurring task(s) for user %s", created_count, user_id)
 
     return created_count
+
+
+async def reset_completed_recurring_tasks(db: AsyncSession, user_id: uuid.UUID) -> int:
+    """
+    Reset completed recurring tasks back to 'open' based on their frequency:
+    - Daily tasks: reset if completed before today
+    - Weekly tasks: reset if completed before this Monday
+
+    Returns the number of tasks reset.
+    """
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    monday_start = (now - timedelta(days=now.weekday())).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+
+    reset_count = 0
+
+    # Daily tasks: completed & last updated before today
+    daily_result = await db.execute(
+        select(Task).where(
+            Task.user_id == user_id,
+            Task.recurrence == "recurring",
+            Task.recurrence_frequency == "daily",
+            Task.status == "completed",
+            Task.updated_at < today_start,
+        )
+    )
+    for task in daily_result.scalars().all():
+        task.status = "open"
+        reset_count += 1
+        logger.info("Reset daily task '%s' (id=%s)", task.title, task.id)
+
+    # Weekly tasks: completed & last updated before this Monday
+    weekly_result = await db.execute(
+        select(Task).where(
+            Task.user_id == user_id,
+            Task.recurrence == "recurring",
+            Task.recurrence_frequency == "weekly",
+            Task.status == "completed",
+            Task.updated_at < monday_start,
+        )
+    )
+    for task in weekly_result.scalars().all():
+        task.status = "open"
+        reset_count += 1
+        logger.info("Reset weekly task '%s' (id=%s)", task.title, task.id)
+
+    if reset_count > 0:
+        await db.commit()
+        logger.info("Reset %d recurring task(s) for user %s", reset_count, user_id)
+
+    return reset_count

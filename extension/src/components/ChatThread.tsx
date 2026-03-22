@@ -200,13 +200,20 @@ export default function ChatThread({ journalId, defaultAgentRole, journalStatus,
           <textarea
             ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value)
+              // Auto-resize, capped at 50% of the chat thread container
+              const container = e.target.closest(".flex.flex-col") as HTMLElement
+              const maxH = container ? container.clientHeight * 0.5 : 200
+              e.target.style.height = "auto"
+              e.target.style.height = Math.min(e.target.scrollHeight, maxH) + "px"
+            }}
             onKeyDown={handleKeyDown}
             placeholder={`Ask ${selectedAgent?.name || "the agent"} a question...`}
             rows={1}
             className="flex-1 resize-none rounded-xl border border-surface-200 px-3.5 py-2 text-sm
               focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400
-              placeholder:text-surface-400 transition max-h-[150px] overflow-y-auto"
+              placeholder:text-surface-400 transition overflow-y-auto"
           />
           <button
             onClick={handleSend}

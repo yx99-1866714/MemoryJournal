@@ -23,7 +23,15 @@ async def lifespan(app: FastAPI):
     from app.services.agent_service import seed_builtin_agents
     async with SessionLocal() as db:
         await seed_builtin_agents(db)
+
+    # Start proactive check-in scheduler as background task
+    import asyncio
+    from app.services.checkin_scheduler import start_scheduler_loop
+    scheduler_task = asyncio.create_task(start_scheduler_loop())
+
     yield
+
+    scheduler_task.cancel()
     await engine.dispose()
 
 

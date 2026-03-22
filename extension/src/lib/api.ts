@@ -142,6 +142,15 @@ export async function apiClearThread(agentId: string, journalId?: string): Promi
   return request<void>(`/agents/${agentId}/threads${params}`, { method: "DELETE" })
 }
 
+export async function apiMarkThreadRead(agentId: string, journalId?: string): Promise<void> {
+  const params = journalId ? `?journal_id=${journalId}` : ""
+  return request<void>(`/agents/${agentId}/threads/read${params}`, { method: "POST" })
+}
+
+export async function apiGetUnreadTotal(): Promise<{ unread_total: number }> {
+  return request<{ unread_total: number }>("/agents/unread-total")
+}
+
 // ── Goals / Tasks ──
 
 export interface GoalsSummary {

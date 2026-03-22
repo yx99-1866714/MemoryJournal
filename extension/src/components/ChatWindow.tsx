@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from "react"
-import { apiAgentRespond, apiClearThread, apiGetThread } from "~lib/api"
+import { apiAgentRespond, apiClearThread, apiGetThread, apiMarkThreadRead } from "~lib/api"
 import type { Agent, AgentMessage } from "~lib/types"
 import { ROLE_GRADIENTS, ROLE_ICONS, WELCOME_MESSAGES } from "~lib/agent-constants"
 
 export default function ChatWindow({
   agent,
   onBack,
+  onRead,
   isFullScreen = false
 }: {
   agent: Agent
   onBack?: () => void
+  onRead?: () => void
   isFullScreen?: boolean
 }) {
   const [messages, setMessages] = useState<AgentMessage[]>([])
@@ -31,7 +33,13 @@ export default function ChatWindow({
         else setMessages([])
       })
       .catch(() => setMessages([]))
-      .finally(() => setLoadingThread(false))
+      .finally(() => {
+        setLoadingThread(false)
+        // Mark thread as read when opening
+        apiMarkThreadRead(agent.id)
+          .then(() => { if (onRead) onRead() })
+          .catch(() => {})
+      })
   }, [agent.id])
 
   useEffect(() => {

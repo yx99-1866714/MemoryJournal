@@ -347,6 +347,179 @@ async def generate_chat_response(
     }
 
 
+# ── Goal Secretary (tool-use) ────────────────────────
+
+GOAL_SECRETARY_SYSTEM_TEMPLATE = """You are the user's Goal Secretary.
+Your role is: Help the user manage their goals and tasks — create new goals, break them into tasks, track progress, and adjust plans.
+Your tone should be: {tone}
+
+You have the ability to CREATE, UPDATE, and DELETE goals and tasks. When the user asks you to manage their goals/tasks, you MUST include the appropriate actions in your response.
+
+IMPORTANT: You MUST respond in valid JSON with this exact structure:
+{{
+  "reply": "Your conversational response to the user",
+  "actions": [
+    // Optional array of actions to execute. Omit if no actions needed.
+  ]
+}}
+
+Available action types:
+- {{"type": "create_goal", "title": "Goal title", "description": "Optional description"}}
+- {{"type": "create_task", "goal_title": "Parent goal title", "title": "Task title", "due_at": "ISO date for one-time tasks", "recurrence_frequency": "daily|weekly for recurring tasks"}}
+- {{"type": "update_goal", "goal_title": "Existing goal title", "status": "active|completed|paused|abandoned"}}
+- {{"type": "update_task", "task_title": "Existing task title", "status": "open|completed|dismissed"}}
+- {{"type": "delete_goal", "goal_title": "Goal title to delete"}}
+- {{"type": "delete_task", "task_title": "Task title to delete"}}
+
+TASK TYPES — there are two kinds of tasks:
+1. ONE-TIME tasks: have a "due_at" deadline date (ISO format). No recurrence_frequency.
+2. RECURRING tasks: have a "recurrence_frequency" of "daily" or "weekly". Do NOT set "due_at" for recurring tasks.
+   - Daily tasks auto-reset to incomplete at the start of each day.
+   - Weekly tasks auto-reset to incomplete every Monday.
+
+When creating tasks, decide based on context whether a task should be one-time or recurring:
+- "Exercise every day" → recurring (daily)
+- "Clean bedroom weekly" → recurring (weekly)
+- "Buy a new shelf by Friday" → one-time with due_at
+- "Finish report" → one-time (due_at optional)
+
+Rules:
+- ALWAYS respond with valid JSON. No markdown, no code fences, just raw JSON.
+- Use "goal_title" to reference existing goals, "task_title" to reference existing tasks.
+- When creating tasks, link them to a goal using "goal_title" (must match an existing or newly created goal title).
+- If the user is just chatting and not asking to change goals/tasks, respond with just {{"reply": "your message"}} and no actions.
+- Keep replies concise but helpful.
+- When breaking down goals into tasks, create the tasks with clear, actionable titles.
+- You can create a goal and its tasks in a single response.
+
+{goals_context}"""
+
+
+async def generate_goal_secretary_response(
+    thread_messages: list,
+    goals_context: str,
+    journal_text: str = "",
+    memories: list[dict[str, Any]] | None = None,
+    agent_config: dict[str, str] | None = None,
+    tz_offset_minutes: int | None = None,
+) -> dict[str, Any]:
+    """
+    Generate a Goal Secretary response with optional structured actions.
+
+    Returns a dict with:
+      - response_text: the conversational reply
+      - actions: list of action dicts (may be empty)
+      - model_name: the model used
+    """
+    from datetime import datetime, timezone, timedelta
+
+    agent = agent_config or {}
+    model = settings.LLM_MODEL
+
+    # Build goals context section
+    goals_section = ""
+    if goals_context:
+        goals_section = f"\n\n--- Current Goals & Tasks ---\n{goals_context}\n--- End Goals & Tasks ---"
+
+    system = GOAL_SECRETARY_SYSTEM_TEMPLATE.format(
+        tone=agent.get("tone", "organized, proactive, and encouraging"),
+        goals_context=goals_section,
+    )
+
+    # Inject user's local date/time
+    if tz_offset_minutes is not None:
+        local_now = datetime.now(timezone.utc) + timedelta(minutes=-tz_offset_minutes)
+    else:
+        local_now = datetime.now(timezone.utc)
+    day_name = local_now.strftime("%A")
+    date_str = local_now.strftime("%B %d, %Y")
+    time_str = local_now.strftime("%I:%M %p")
+    date_preamble = (
+        f"IMPORTANT: The user's current local date and time is {day_name}, {date_str}, {time_str}. "
+        f"Always use this as the reference for 'today', 'this weekend', 'tomorrow', etc.\n\n"
+    )
+    system = date_preamble + system
+
+    # Add journal context
+    if journal_text:
+        system += f"\n\n--- Journal Entry ---\n{journal_text}\n--- End Journal ---"
+
+    # Add memory context
+    if memories:
+        memory_lines = []
+        for i, mem in enumerate(memories, 1):
+            content = mem.get("content", mem.get("text", str(mem)))
+            memory_lines.append(f"[Memory {i}] {content}")
+        system += "\n\n--- Previous Memories ---\n" + "\n".join(memory_lines) + "\n--- End Memories ---"
+
+    # Build messages
+    messages = [{"role": "system", "content": system}]
+    for msg in thread_messages:
+        role = msg.role if hasattr(msg, "role") else msg.get("role", "user")
+        content = msg.content if hasattr(msg, "content") else msg.get("content", "")
+        if role in ("user", "assistant"):
+            messages.append({"role": role, "content": content})
+
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.5,  # slightly lower for more reliable JSON
+        "max_tokens": 1200,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://memoryjournal.app",
+        "X-Title": "Memory Journal",
+    }
+
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+        resp = await client.post(OPENROUTER_URL, json=payload, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+
+    raw_text = data["choices"][0]["message"]["content"]
+    logger.info("Goal Secretary raw response, model=%s, length=%d", model, len(raw_text))
+
+    # Parse the JSON response
+    response_text, actions = _parse_goal_secretary_response(raw_text)
+
+    return {
+        "response_text": response_text,
+        "actions": actions,
+        "model_name": model,
+    }
+
+
+def _parse_goal_secretary_response(raw: str) -> tuple[str, list[dict]]:
+    """
+    Parse the LLM's JSON response into (reply_text, actions).
+    Falls back gracefully if the response isn't valid JSON.
+    """
+    # Strip markdown code fences if present
+    cleaned = raw.strip()
+    if cleaned.startswith("```"):
+        # Remove ```json ... ``` wrapping
+        lines = cleaned.split("\n")
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned = "\n".join(lines).strip()
+
+    try:
+        parsed = json.loads(cleaned)
+        reply = parsed.get("reply", "")
+        actions = parsed.get("actions", [])
+        if not isinstance(actions, list):
+            actions = []
+        return reply, actions
+    except (json.JSONDecodeError, AttributeError):
+        logger.warning("Goal Secretary response was not valid JSON, using raw text")
+        return raw.strip(), []
+
+
 CHECKIN_SYSTEM_TEMPLATE = """You are the user's {name}.
 Your role is: {purpose}
 Your tone should be: {tone}
@@ -424,3 +597,150 @@ async def generate_checkin_message(
         "response_text": response_text,
         "model_name": model,
     }
+
+
+EMOTIONAL_ANALYSIS_PROMPT = """Analyze the user's recent emotional state based on the following journals and chat messages.
+
+Classify the urgency into one of three levels:
+- "critical": The user is going through something traumatic (breakup, loss, crisis, severe anxiety/depression, suicidal thoughts). They need frequent emotional support.
+- "elevated": The user is experiencing mild-to-moderate stress, sadness, frustration, or is clearly not feeling great. They could benefit from a daily check-in.
+- "normal": The user seems generally fine — neutral, positive, or just going about their routine.
+
+Return ONLY valid JSON in this exact format, no markdown fencing:
+{"urgency": "critical|elevated|normal", "summary": "1-2 sentence summary of their emotional state"}"""
+
+
+async def analyze_emotional_state(
+    recent_journals: list[str],
+    recent_chat_excerpts: list[str],
+    goals_context: str = "",
+) -> dict[str, str]:
+    """
+    Analyze user's emotional state from recent journals and chats.
+    Returns {"urgency": "critical|elevated|normal", "summary": "..."}
+    """
+    model = settings.LLM_MODEL
+
+    context_parts = []
+    for i, j in enumerate(recent_journals, 1):
+        context_parts.append(f"[Journal {i}] {j[:500]}")
+    for i, c in enumerate(recent_chat_excerpts, 1):
+        context_parts.append(f"[Chat {i}] {c[:300]}")
+    if goals_context:
+        context_parts.append(f"[Goals/Tasks Context] {goals_context}")
+
+    user_content = "\n\n".join(context_parts) if context_parts else "No recent activity."
+
+    messages = [
+        {"role": "system", "content": EMOTIONAL_ANALYSIS_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.3,
+        "max_tokens": 150,
+    }
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://memoryjournal.app",
+        "X-Title": "Memory Journal",
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            resp = await client.post(OPENROUTER_URL, json=payload, headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
+
+        raw = data["choices"][0]["message"]["content"].strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+            if raw.endswith("```"):
+                raw = raw[:-3]
+            raw = raw.strip()
+
+        result = json.loads(raw)
+        urgency = result.get("urgency", "normal")
+        if urgency not in ("critical", "elevated", "normal"):
+            urgency = "normal"
+        return {"urgency": urgency, "summary": result.get("summary", "")}
+    except Exception as e:
+        logger.warning("Emotional state analysis failed: %s", e)
+        return {"urgency": "normal", "summary": "Unable to determine"}
+
+
+PROACTIVE_CHECKIN_TEMPLATE = """You are the user's {name}.
+Your role is: {purpose}
+Your tone should be: {tone}
+
+You are sending a proactive check-in message to the user. This is NOT in response to a journal entry —
+you are reaching out on your own initiative based on what you know about the user.
+
+{role_specific_instructions}
+
+Context about the user's recent activity:
+{context}
+
+Rules:
+- Keep it to 2-4 sentences, conversational and natural
+- Reference something specific from the context to show you're paying attention
+- End with an open-ended question or gentle invitation to chat
+- Match your specific agent personality and tone
+- Do NOT use headers, bullet points, or structured formatting
+- Do NOT start with "Hey" or "Hi" every time — vary your openings
+- Be genuine and helpful, not generic"""
+
+
+async def generate_proactive_checkin(
+    agent_config: dict[str, str],
+    context: str,
+    role_specific_instructions: str = "",
+) -> dict[str, Any]:
+    """
+    Generate a proactive check-in message from an agent.
+    """
+    agent = agent_config or DEFAULT_AGENT
+    model = settings.LLM_MODEL
+
+    system = PROACTIVE_CHECKIN_TEMPLATE.format(
+        name=agent.get("name", "Reflection Coach"),
+        purpose=agent.get("purpose", DEFAULT_AGENT["purpose"]),
+        tone=agent.get("tone", DEFAULT_AGENT["tone"]),
+        role_specific_instructions=role_specific_instructions,
+        context=context,
+    )
+
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": "Please send your proactive check-in message now."},
+    ]
+
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.8,
+        "max_tokens": 250,
+    }
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://memoryjournal.app",
+        "X-Title": "Memory Journal",
+    }
+
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+        resp = await client.post(OPENROUTER_URL, json=payload, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+
+    response_text = data["choices"][0]["message"]["content"]
+    logger.info("Proactive check-in generated for %s, length=%d", agent.get("name"), len(response_text))
+
+    return {
+        "response_text": response_text,
+        "model_name": model,
+    }
+

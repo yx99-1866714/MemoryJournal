@@ -12,7 +12,7 @@ from app.api.auth import get_current_user_id
 from app.db import get_db
 from app.models.goal import Goal
 from app.models.task import Task
-from app.services.recurring_tasks import generate_recurring_tasks
+from app.services.recurring_tasks import generate_recurring_tasks, reset_completed_recurring_tasks
 
 router = APIRouter(prefix="/goals", tags=["goals"])
 
@@ -119,8 +119,9 @@ async def list_goals(
     """List all goals with their tasks."""
     uid = uuid.UUID(user_id)
 
-    # Auto-generate recurring tasks for the current period
+    # Auto-generate recurring tasks for the current period & reset completed ones
     await generate_recurring_tasks(db, uid)
+    await reset_completed_recurring_tasks(db, uid)
     result = await db.execute(
         select(Goal)
         .where(Goal.user_id == uid)

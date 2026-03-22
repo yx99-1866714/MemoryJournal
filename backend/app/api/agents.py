@@ -3,8 +3,8 @@ Agents API router — list agents, follow-up chat.
 """
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import delete, select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import delete, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import get_current_user_id
@@ -34,8 +34,74 @@ async def list_agents(
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
+    from app.models.agent_thread import AgentThread, AgentMessage
+
     agents = await agent_service.get_agents(db, uuid.UUID(user_id))
-    return AgentListResponse(agents=[AgentResponse.model_validate(a) for a in agents])
+
+    # Compute unread counts per agent (graceful degradation if columns missing)
+    agent_responses = []
+    for a in agents:
+        unread = 0
+        try:
+            # Find the free-chat thread (journal_id=NULL) for this agent/user
+            thread_q = select(AgentThread).where(
+                AgentThread.user_id == uuid.UUID(user_id),
+                AgentThread.agent_id == a.id,
+                AgentThread.journal_id.is_(None),
+            )
+            thread_result = await db.execute(thread_q)
+            thread = thread_result.scalars().first()
+
+            if thread and thread.last_read_at:
+                msg_q = select(func.count()).select_from(AgentMessage).where(
+                    AgentMessage.thread_id == thread.id,
+                    AgentMessage.role == "assistant",
+                    AgentMessage.created_at > thread.last_read_at,
+                )
+                unread = (await db.execute(msg_q)).scalar_one()
+        except Exception:
+            await db.rollback()
+            unread = 0
+
+        resp = AgentResponse.model_validate(a)
+        resp.unread_count = unread
+        agent_responses.append(resp)
+
+    return AgentListResponse(agents=agent_responses)
+
+
+@router.get("/unread-total")
+async def get_unread_total(
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return total unread assistant messages across all agents."""
+    from app.models.agent_thread import AgentThread, AgentMessage
+
+    try:
+        # Get all free-chat threads for this user
+        threads_q = select(AgentThread).where(
+            AgentThread.user_id == uuid.UUID(user_id),
+            AgentThread.journal_id.is_(None),
+        )
+        threads_result = await db.execute(threads_q)
+        threads = list(threads_result.scalars().all())
+
+        total = 0
+        for thread in threads:
+            if not thread.last_read_at:
+                continue
+            msg_q = select(func.count()).select_from(AgentMessage).where(
+                AgentMessage.thread_id == thread.id,
+                AgentMessage.role == "assistant",
+                AgentMessage.created_at > thread.last_read_at,
+            )
+            total += (await db.execute(msg_q)).scalar_one()
+
+        return {"unread_total": total}
+    except Exception:
+        await db.rollback()
+        return {"unread_total": 0}
 
 
 @router.get("/{agent_id}", response_model=AgentResponse)
@@ -218,16 +284,38 @@ async def agent_respond(
 
     import logging
     _logger = logging.getLogger(__name__)
-    _logger.info("Agent respond: tz_offset_minutes=%s", body.tz_offset_minutes)
+    _logger.info("Agent respond: tz_offset_minutes=%s, role=%s", body.tz_offset_minutes, agent.role)
 
-    # Generate response
-    result = await llm_service.generate_chat_response(
-        thread_messages=messages,
-        journal_text=journal_text,
-        memories=memories,
-        agent_config=agent_config,
-        tz_offset_minutes=body.tz_offset_minutes,
-    )
+    # Route Goal Secretary through structured tool-use flow
+    if agent.role == "goal_secretary":
+        from app.services.goal_actions import execute_actions
+
+        # Build goals/tasks context for the LLM
+        goals_context = await _build_goals_context_for_agent(db, uuid.UUID(user_id))
+
+        result = await llm_service.generate_goal_secretary_response(
+            thread_messages=messages,
+            goals_context=goals_context,
+            journal_text=journal_text,
+            memories=memories,
+            agent_config=agent_config,
+            tz_offset_minutes=body.tz_offset_minutes,
+        )
+
+        # Execute any actions the LLM requested
+        actions = result.get("actions", [])
+        if actions:
+            action_results = await execute_actions(db, uuid.UUID(user_id), actions)
+            _logger.info("Goal Secretary actions executed: %s", action_results)
+    else:
+        # Standard chat flow for all other agents
+        result = await llm_service.generate_chat_response(
+            thread_messages=messages,
+            journal_text=journal_text,
+            memories=memories,
+            agent_config=agent_config,
+            tz_offset_minutes=body.tz_offset_minutes,
+        )
 
     # Store assistant message
     assistant_msg = await agent_service.add_message(
@@ -236,6 +324,56 @@ async def agent_respond(
 
     return MessageResponse.model_validate(assistant_msg)
 
+
+async def _build_goals_context_for_agent(db: AsyncSession, user_id: uuid.UUID) -> str:
+    """Build a comprehensive text summary of goals and tasks for the Goal Secretary."""
+    from app.models.goal import Goal
+    from app.models.task import Task
+
+    # Fetch active goals
+    goals_result = await db.execute(
+        select(Goal)
+        .where(Goal.user_id == user_id, Goal.status.in_(["active", "paused"]))
+        .order_by(Goal.created_at.desc())
+        .limit(20)
+    )
+    goals = list(goals_result.scalars().all())
+
+    # Fetch all open/in-progress tasks
+    tasks_result = await db.execute(
+        select(Task)
+        .where(Task.user_id == user_id, Task.status.in_(["open", "in_progress"]))
+        .order_by(Task.due_at.asc().nulls_last())
+        .limit(50)
+    )
+    tasks = list(tasks_result.scalars().all())
+
+    # Build text representation
+    parts = []
+    for goal in goals:
+        goal_tasks = [t for t in tasks if t.goal_id == goal.id]
+        due_str = f" (due: {goal.due_at.strftime('%Y-%m-%d')})" if goal.due_at else ""
+        parts.append(f"Goal: \"{goal.title}\" [{goal.status}]{due_str}")
+        if goal.description:
+            parts.append(f"  Description: {goal.description[:200]}")
+        for t in goal_tasks:
+            t_due = f" (due: {t.due_at.strftime('%Y-%m-%d')})" if t.due_at else ""
+            t_freq = f" (recurring: {t.recurrence_frequency})" if t.recurrence == "recurring" else ""
+            parts.append(f"  - Task: \"{t.title}\" [{t.status}]{t_due}{t_freq}")
+
+    # Tasks without a goal
+    orphan_tasks = [t for t in tasks if not t.goal_id]
+    if orphan_tasks:
+        parts.append("\nStandalone Tasks (no goal):")
+        for t in orphan_tasks:
+            t_due = f" (due: {t.due_at.strftime('%Y-%m-%d')})" if t.due_at else ""
+            t_freq = f" (recurring: {t.recurrence_frequency})" if t.recurrence == "recurring" else ""
+            parts.append(f"  - Task: \"{t.title}\" [{t.status}]{t_due}{t_freq}")
+
+    if not parts:
+        return "The user has no active goals or tasks."
+
+    return "\n".join(parts)
 
 @router.get("/{agent_id}/threads", response_model=ThreadResponse | None)
 async def get_thread(
@@ -301,3 +439,34 @@ async def clear_thread(
         await db.delete(thread)
     if threads:
         await db.commit()
+
+
+@router.post("/{agent_id}/threads/read", status_code=200)
+async def mark_thread_read(
+    agent_id: str,
+    journal_id: str | None = None,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark a thread as read by setting last_read_at to now."""
+    from datetime import datetime, timezone
+    from app.models.agent_thread import AgentThread
+
+    query = select(AgentThread).where(
+        AgentThread.user_id == uuid.UUID(user_id),
+        AgentThread.agent_id == uuid.UUID(agent_id),
+    )
+    if journal_id:
+        query = query.where(AgentThread.journal_id == uuid.UUID(journal_id))
+    else:
+        query = query.where(AgentThread.journal_id.is_(None))
+
+    result = await db.execute(query)
+    thread = result.scalars().first()
+
+    if thread:
+        thread.last_read_at = datetime.now(timezone.utc)
+        await db.commit()
+        return {"status": "ok"}
+
+    return {"status": "no_thread"}

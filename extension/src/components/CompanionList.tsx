@@ -5,10 +5,12 @@ import { ROLE_GRADIENTS, ROLE_ICONS, WELCOME_MESSAGES } from "~lib/agent-constan
 
 export default function CompanionList({ 
   onSelect, 
-  selectedId 
+  selectedId,
+  refreshKey = 0
 }: { 
   onSelect: (agent: Agent) => void
   selectedId?: string
+  refreshKey?: number
 }) {
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
@@ -37,7 +39,7 @@ export default function CompanionList({
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [])
+  }, [refreshKey])
 
   if (loading) {
     return (
@@ -58,6 +60,7 @@ export default function CompanionList({
           || WELCOME_MESSAGES[agent.role]
           || agent.purpose
         const isSelected = selectedId === agent.id
+        const hasUnread = (agent.unread_count || 0) > 0
 
         return (
           <button
@@ -69,12 +72,19 @@ export default function CompanionList({
                 : "bg-white border-surface-200 hover:border-primary-300 hover:shadow-sm active:scale-[0.98]"
             }`}
           >
-            <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-xl shadow-sm flex-shrink-0`}>
-              {icon}
+            <div className="relative flex-shrink-0">
+              <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-xl shadow-sm`}>
+                {icon}
+              </div>
+              {hasUnread && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
+                  {agent.unread_count > 9 ? "9+" : agent.unread_count}
+                </span>
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-sm font-semibold text-surface-800 truncate">{agent.name}</h3>
-              <p className="text-xs text-surface-400 truncate">{preview}</p>
+              <p className={`text-xs truncate ${hasUnread ? "text-surface-700 font-medium" : "text-surface-400"}`}>{preview}</p>
             </div>
           </button>
         )

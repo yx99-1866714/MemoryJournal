@@ -13,7 +13,7 @@ import JournalEditor from "~components/JournalEditor"
 import ChatWindow from "~components/ChatWindow"
 import CompanionList from "~components/CompanionList"
 import Layout from "~components/Layout"
-import { apiCreateAgent, apiDeleteAccount, apiDeleteAgent, apiExportJournals, apiGetAgents, apiGetInsights, apiGetJournalsByDate, apiImportJournals, apiToggleAgent, apiUpdateAgent } from "~lib/api"
+import { apiCreateAgent, apiDeleteAccount, apiDeleteAgent, apiExportJournals, apiGetAgents, apiGetInsights, apiGetJournalsByDate, apiGetUnreadTotal, apiImportJournals, apiToggleAgent, apiUpdateAgent } from "~lib/api"
 import type { InsightsData } from "~lib/api"
 import type { Agent, Journal } from "~lib/types"
 import { useAuthStore } from "~store/authStore"
@@ -23,9 +23,13 @@ import { useJournalStore } from "~store/journalStore"
 function HomePage() {
   const navigate = useNavigate()
   const { journals, total, loading, fetchJournals } = useJournalStore()
+  const [unreadTotal, setUnreadTotal] = useState(0)
 
   useEffect(() => {
     fetchJournals(5)
+    apiGetUnreadTotal()
+      .then((res) => setUnreadTotal(res.unread_total))
+      .catch(() => {})
   }, [])
 
   return (
@@ -42,8 +46,13 @@ function HomePage() {
         </button>
         <button
           onClick={() => navigate("/chat")}
-          className="p-6 rounded-2xl bg-white border border-surface-200 hover:border-primary-300 hover:shadow-md transition-all text-left"
+          className="relative p-6 rounded-2xl bg-white border border-surface-200 hover:border-primary-300 hover:shadow-md transition-all text-left"
         >
+          {unreadTotal > 0 && (
+            <span className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
+              {unreadTotal > 9 ? "9+" : unreadTotal}
+            </span>
+          )}
           <span className="text-2xl mb-2 block">💬</span>
           <h3 className="font-semibold text-lg text-surface-800">Chat</h3>
           <p className="text-surface-500 text-sm mt-1">Talk to AI companions</p>
@@ -328,7 +337,6 @@ function ViewJournalPage() {
           <ChatThread 
             className="flex-1 min-h-[300px]"
             journalId={currentJournal.id} 
-            defaultAgentRole="reflection_coach" 
             journalStatus={currentJournal.status} 
           />
         )}
@@ -1021,6 +1029,7 @@ function TabsApp() {
   // ---- Chat Page Component ----
   const ChatPage = () => {
     const [chatAgent, setChatAgent] = useState<Agent | null>(null)
+    const [refreshKey, setRefreshKey] = useState(0)
 
     return (
       <Layout title="AI Chat">
@@ -1032,7 +1041,7 @@ function TabsApp() {
               <p className="text-sm text-surface-500">Select an AI to chat with</p>
             </div>
             <div className="flex-1 min-h-0 bg-surface-50/50">
-              <CompanionList onSelect={setChatAgent} selectedId={chatAgent?.id} />
+              <CompanionList onSelect={setChatAgent} selectedId={chatAgent?.id} refreshKey={refreshKey} />
             </div>
           </div>
           
@@ -1042,6 +1051,7 @@ function TabsApp() {
               <ChatWindow 
                 agent={chatAgent} 
                 onBack={() => setChatAgent(null)} 
+                onRead={() => setRefreshKey((k) => k + 1)}
                 isFullScreen={true}
               />
             ) : (

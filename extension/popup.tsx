@@ -3,12 +3,13 @@ import { useEffect, useState } from "react"
 import "~src/style.css"
 
 import type { GoalsSummary } from "~lib/api"
-import { apiGetGoalsSummary } from "~lib/api"
+import { apiGetGoalsSummary, apiGetUnreadTotal } from "~lib/api"
 import { useAuthStore } from "~store/authStore"
 
 function Popup() {
   const { user, loading, init } = useAuthStore()
   const [summary, setSummary] = useState<GoalsSummary | null>(null)
+  const [unreadTotal, setUnreadTotal] = useState(0)
 
   useEffect(() => {
     init()
@@ -18,6 +19,9 @@ function Popup() {
     if (user) {
       apiGetGoalsSummary()
         .then(setSummary)
+        .catch(() => {})
+      apiGetUnreadTotal()
+        .then((res) => setUnreadTotal(res.unread_total))
         .catch(() => {})
     }
   }, [user])
@@ -154,8 +158,13 @@ function Popup() {
         </button>
         <button
           onClick={openChatPanel}
-          className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-all flex items-center justify-center gap-2 border border-white/10"
+          className="relative w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-all flex items-center justify-center gap-2 border border-white/10"
         >
+          {unreadTotal > 0 && (
+            <span className="absolute top-1.5 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow">
+              {unreadTotal > 9 ? "9+" : unreadTotal}
+            </span>
+          )}
           <span>💬</span> AI Chat (Side Panel)
         </button>
       </div>
