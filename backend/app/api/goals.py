@@ -69,6 +69,22 @@ class GoalUpdate(BaseModel):
     recurrence_frequency: str | None = None
 
 
+class GoalCreate(BaseModel):
+    title: str
+    description: str | None = None
+    due_at: str | None = None  # ISO date string
+    recurrence: str = "one_time"
+    recurrence_frequency: str | None = None
+
+
+class TaskCreate(BaseModel):
+    title: str
+    goal_id: str | None = None
+    due_at: str | None = None  # ISO date string
+    recurrence: str = "one_time"
+    recurrence_frequency: str | None = None
+
+
 class GoalsSummary(BaseModel):
     active_goals: int
     open_tasks: int
@@ -140,6 +156,84 @@ async def list_goals(
         response.append(_serialize_goal(goal, tasks))
 
     return {"goals": response}
+
+
+@router.post("/")
+async def create_goal(
+    body: GoalCreate,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Manually create a new goal."""
+    from datetime import datetime, timezone
+
+    uid = uuid.UUID(user_id)
+    due_at = None
+    if body.due_at:
+        try:
+            due_at = datetime.fromisoformat(body.due_at)
+            if due_at.tzinfo is None:
+                due_at = due_at.replace(hour=12, tzinfo=timezone.utc)
+        except (ValueError, TypeError):
+            due_at = None
+
+    recurrence = body.recurrence if body.recurrence in ("one_time", "recurring") else "one_time"
+    freq = body.recurrence_frequency
+    if freq not in ("daily", "weekly", "monthly", "yearly", None):
+        freq = None
+
+    goal = Goal(
+        user_id=uid,
+        title=body.title[:500],
+        description=body.description or "",
+        due_at=due_at,
+        recurrence=recurrence,
+        recurrence_frequency=freq,
+    )
+    db.add(goal)
+    await db.commit()
+    await db.refresh(goal)
+    return _serialize_goal(goal)
+
+
+@router.post("/tasks/")
+async def create_task(
+    body: TaskCreate,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Manually create a new task."""
+    from datetime import datetime, timezone
+
+    uid = uuid.UUID(user_id)
+    due_at = None
+    if body.due_at:
+        try:
+            due_at = datetime.fromisoformat(body.due_at)
+            if due_at.tzinfo is None:
+                due_at = due_at.replace(hour=12, tzinfo=timezone.utc)
+        except (ValueError, TypeError):
+            due_at = None
+
+    recurrence = body.recurrence if body.recurrence in ("one_time", "recurring") else "one_time"
+    freq = body.recurrence_frequency
+    if freq not in ("daily", "weekly", "monthly", "yearly", None):
+        freq = None
+
+    goal_id = uuid.UUID(body.goal_id) if body.goal_id else None
+
+    task = Task(
+        user_id=uid,
+        title=body.title[:500],
+        goal_id=goal_id,
+        due_at=due_at,
+        recurrence=recurrence,
+        recurrence_frequency=freq,
+    )
+    db.add(task)
+    await db.commit()
+    await db.refresh(task)
+    return _serialize_task(task)
 
 
 @router.patch("/{goal_id}")
@@ -356,10 +450,10 @@ async def get_reminders(
     - due tomorrow (within 24–48 hours)
     Filters out tasks already reminded within 12 hours.
     """
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
 
     uid = uuid.UUID(user_id)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     cutoff_48h = now + timedelta(hours=48)
     reminded_cutoff = now - timedelta(hours=12)
 

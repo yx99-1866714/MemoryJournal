@@ -78,6 +78,14 @@ async function checkReminders() {
     }>
 
     // Send Chrome notifications for each reminder
+    const icons = chrome.runtime.getManifest().icons || {}
+    const iconPath = icons["128"] || icons["64"] || icons["48"] || icons["32"] || icons["16"]
+    // iconUrl is REQUIRED – use a 1px transparent PNG as fallback
+    const iconUrl = iconPath
+      ? chrome.runtime.getURL(iconPath)
+      : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+    console.log("Notification icon URL:", iconUrl)
+
     for (const reminder of reminders) {
       const urgencyLabel =
         reminder.urgency === "overdue"
@@ -90,13 +98,19 @@ async function checkReminders() {
         ? new Date(reminder.due_at).toLocaleDateString()
         : ""
 
-      chrome.notifications.create(`reminder-${reminder.id}`, {
+      const notifId = `reminder-${reminder.id}`
+      chrome.notifications.create(notifId, {
         type: "basic",
-        iconUrl: chrome.runtime.getURL("assets/icon.png"),
+        iconUrl,
         title: `${urgencyLabel}: ${reminder.title}`,
         message: dueStr ? `Due: ${dueStr}` : "No specific deadline",
         priority: reminder.urgency === "overdue" ? 2 : 1,
-        requireInteraction: reminder.urgency === "overdue",
+      }, (createdId) => {
+        if (chrome.runtime.lastError) {
+          console.error(`Notification "${notifId}" failed:`, chrome.runtime.lastError.message)
+        } else {
+          console.log(`Notification "${createdId}" created successfully`)
+        }
       })
     }
 

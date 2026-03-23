@@ -241,6 +241,26 @@ export async function apiDeleteTask(taskId: string): Promise<void> {
   return request<void>(`/goals/tasks/${taskId}`, { method: "DELETE" })
 }
 
+export async function apiCreateGoal(data: {
+  title: string; description?: string; due_at?: string;
+  recurrence?: string; recurrence_frequency?: string;
+}): Promise<GoalItem> {
+  return request<GoalItem>("/goals/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function apiCreateTask(data: {
+  title: string; goal_id?: string; due_at?: string;
+  recurrence?: string; recurrence_frequency?: string;
+}): Promise<TaskItem> {
+  return request<TaskItem>("/goals/tasks/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+}
+
 // ---- Agent CRUD ----
 
 export async function apiCreateAgent(data: {

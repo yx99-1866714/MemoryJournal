@@ -6,7 +6,7 @@ A memory-powered AI journaling Chrome extension with persistent AI companions. W
 
 ## What Is Memory Journal?
 
-Memory Journal is a Chrome extension (side panel + full-page dashboard) backed by a FastAPI server. It connects to [EverMemOS](https://evermemos.com) for long-term memory storage and uses LLMs (via OpenRouter) to power a suite of AI companions that grow smarter over time as they learn from your journal entries.
+Memory Journal is a Chrome extension (side panel + full-page dashboard) backed by a FastAPI server. It connects to [EverMemOS](https://docs.evermind.ai/cloud/overview) for long-term memory storage and uses LLMs (via OpenRouter) to power a suite of AI companions that grow smarter over time as they learn from your journal entries.
 
 Unlike typical journaling apps, Memory Journal doesn't just store text — it **processes** every entry through multiple AI agents, stores insights as searchable memories, and uses that growing context to provide increasingly personalized support.
 
