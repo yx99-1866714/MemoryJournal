@@ -13,9 +13,9 @@ import JournalEditor from "~components/JournalEditor"
 import ChatWindow from "~components/ChatWindow"
 import CompanionList from "~components/CompanionList"
 import Layout from "~components/Layout"
-import { apiCreateAgent, apiDeleteAccount, apiDeleteAgent, apiExportJournals, apiGetAgents, apiGetInsights, apiGetJournalsByDate, apiGetUnreadTotal, apiImportJournals, apiToggleAgent, apiUpdateAgent } from "~lib/api"
+import { apiCreateAgent, apiDeleteAccount, apiDeleteAgent, apiExportJournals, apiGetAgents, apiGetInsights, apiGetJournalsByDate, apiGetJournalsByTag, apiGetTags, apiGetUnreadTotal, apiImportJournals, apiToggleAgent, apiUpdateAgent } from "~lib/api"
 import type { InsightsData } from "~lib/api"
-import type { Agent, Journal } from "~lib/types"
+import type { Agent, Journal, Tag } from "~lib/types"
 import { useAuthStore } from "~store/authStore"
 import { useJournalStore } from "~store/journalStore"
 
@@ -348,9 +348,19 @@ function ViewJournalPage() {
 // ---- History Page ----
 function HistoryPage() {
   const navigate = useNavigate()
+  const [viewMode, setViewMode] = useState<"calendar" | "tags">("calendar")
+
+  // Calendar state
   const [selectedDate, setSelectedDate] = useState<{ year: number; month: number; day: number } | null>(null)
   const [dateJournals, setDateJournals] = useState<Journal[]>([])
   const [dateLoading, setDateLoading] = useState(false)
+
+  // Tags state
+  const [tags, setTags] = useState<Tag[]>([])
+  const [selectedTag, setSelectedTag] = useState<Tag | null>(null)
+  const [tagJournals, setTagJournals] = useState<Journal[]>([])
+  const [tagsLoading, setTagsLoading] = useState(false)
+  const [tagJournalsLoading, setTagJournalsLoading] = useState(false)
 
   const handleDateSelect = async (year: number, month: number, day: number) => {
     setSelectedDate({ year, month, day })
@@ -376,57 +386,185 @@ function HistoryPage() {
     })
   }
 
+  // Load tags when switching to tags view
+  useEffect(() => {
+    if (viewMode === "tags" && tags.length === 0) {
+      setTagsLoading(true)
+      apiGetTags()
+        .then((res) => setTags(res.tags))
+        .catch(() => {})
+        .finally(() => setTagsLoading(false))
+    }
+  }, [viewMode])
+
+  const handleTagSelect = async (tag: Tag) => {
+    setSelectedTag(tag)
+    setTagJournalsLoading(true)
+    try {
+      const res = await apiGetJournalsByTag(tag.id)
+      setTagJournals(res.journals)
+    } catch {
+      setTagJournals([])
+    } finally {
+      setTagJournalsLoading(false)
+    }
+  }
+
   return (
     <Layout title="Journal History">
-      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
-        {/* Calendar */}
-        <div>
-          <Calendar onDateSelect={handleDateSelect} selectedDate={selectedDate} />
-        </div>
+      {/* View mode toggle */}
+      <div className="flex gap-1 p-1 mb-6 bg-surface-100 rounded-xl w-fit">
+        <button
+          onClick={() => setViewMode("calendar")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            viewMode === "calendar"
+              ? "bg-white text-primary-700 shadow-sm"
+              : "text-surface-500 hover:text-surface-700"
+          }`}
+        >
+          📅 Calendar
+        </button>
+        <button
+          onClick={() => setViewMode("tags")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            viewMode === "tags"
+              ? "bg-white text-primary-700 shadow-sm"
+              : "text-surface-500 hover:text-surface-700"
+          }`}
+        >
+          🏷️ Tags
+        </button>
+      </div>
 
-        {/* Journal entries for selected date */}
-        <div>
-          {!selectedDate ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <span className="text-5xl mb-4">📅</span>
-              <h3 className="text-lg font-semibold text-surface-700 mb-2">Select a Date</h3>
-              <p className="text-surface-400 text-sm max-w-xs">
-                Click on a highlighted day in the calendar to view your journal entries for that date.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="mb-4">
-                <h2 className="text-lg font-semibold text-surface-800">
-                  {formatSelectedDate()}
-                </h2>
-                <p className="text-sm text-surface-400 mt-0.5">
-                  {dateJournals.length} {dateJournals.length === 1 ? "entry" : "entries"}
+      {viewMode === "calendar" ? (
+        /* Calendar View */
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
+          <div>
+            <Calendar onDateSelect={handleDateSelect} selectedDate={selectedDate} />
+          </div>
+          <div>
+            {!selectedDate ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <span className="text-5xl mb-4">📅</span>
+                <h3 className="text-lg font-semibold text-surface-700 mb-2">Select a Date</h3>
+                <p className="text-surface-400 text-sm max-w-xs">
+                  Click on a highlighted day in the calendar to view your journal entries for that date.
                 </p>
               </div>
-
-              {dateLoading ? (
-                <div className="text-center py-12 text-surface-400 animate-pulse">Loading entries...</div>
-              ) : dateJournals.length === 0 ? (
-                <div className="text-center py-12">
-                  <span className="text-3xl block mb-2">📝</span>
-                  <p className="text-surface-500 text-sm">No entries for this date.</p>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <h2 className="text-lg font-semibold text-surface-800">
+                    {formatSelectedDate()}
+                  </h2>
+                  <p className="text-sm text-surface-400 mt-0.5">
+                    {dateJournals.length} {dateJournals.length === 1 ? "entry" : "entries"}
+                  </p>
+                </div>
+                {dateLoading ? (
+                  <div className="text-center py-12 text-surface-400 animate-pulse">Loading entries...</div>
+                ) : dateJournals.length === 0 ? (
+                  <div className="text-center py-12">
+                    <span className="text-3xl block mb-2">📝</span>
+                    <p className="text-surface-500 text-sm">No entries for this date.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {dateJournals.map((j) => (
+                      <JournalCard
+                        key={j.id}
+                        journal={j}
+                        onClick={() => navigate(`/journal/${j.id}`)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Tags View */
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
+          {/* Tag list */}
+          <div>
+            <div className="bg-white rounded-xl border border-surface-200 p-4">
+              <h3 className="text-sm font-semibold text-surface-700 mb-3">All Tags</h3>
+              {tagsLoading ? (
+                <div className="text-center py-8 text-surface-400 animate-pulse">Loading tags...</div>
+              ) : tags.length === 0 ? (
+                <div className="text-center py-8">
+                  <span className="text-3xl block mb-2">🏷️</span>
+                  <p className="text-surface-400 text-sm">No tags yet. Submit a journal to auto-generate tags.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {dateJournals.map((j) => (
-                    <JournalCard
-                      key={j.id}
-                      journal={j}
-                      onClick={() => navigate(`/journal/${j.id}`)}
-                    />
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => handleTagSelect(tag)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        selectedTag?.id === tag.id
+                          ? "bg-primary-500 text-white shadow-sm"
+                          : "bg-surface-100 text-surface-600 hover:bg-primary-50 hover:text-primary-600"
+                      }`}
+                    >
+                      #{tag.name}
+                      <span className={`ml-1.5 text-xs ${
+                        selectedTag?.id === tag.id ? "text-primary-200" : "text-surface-400"
+                      }`}>
+                        {tag.journal_count}
+                      </span>
+                    </button>
                   ))}
                 </div>
               )}
-            </>
-          )}
+            </div>
+          </div>
+
+          {/* Journals for selected tag */}
+          <div>
+            {!selectedTag ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <span className="text-5xl mb-4">🏷️</span>
+                <h3 className="text-lg font-semibold text-surface-700 mb-2">Select a Tag</h3>
+                <p className="text-surface-400 text-sm max-w-xs">
+                  Click on a tag to view all journal entries with that tag.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <h2 className="text-lg font-semibold text-surface-800">
+                    #{selectedTag.name}
+                  </h2>
+                  <p className="text-sm text-surface-400 mt-0.5">
+                    {tagJournals.length} {tagJournals.length === 1 ? "entry" : "entries"}
+                  </p>
+                </div>
+                {tagJournalsLoading ? (
+                  <div className="text-center py-12 text-surface-400 animate-pulse">Loading entries...</div>
+                ) : tagJournals.length === 0 ? (
+                  <div className="text-center py-12">
+                    <span className="text-3xl block mb-2">📝</span>
+                    <p className="text-surface-500 text-sm">No entries with this tag.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {tagJournals.map((j) => (
+                      <JournalCard
+                        key={j.id}
+                        journal={j}
+                        onClick={() => navigate(`/journal/${j.id}`)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </Layout>
   )
 }

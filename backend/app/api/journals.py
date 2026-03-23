@@ -1,21 +1,31 @@
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import get_current_user_id
 from app.db import get_db
+from app.models.journal import Journal
 from app.models.journal_feedback import JournalFeedback
+from app.models.tag import Tag, journal_tags
 from app.schemas.feedback import FeedbackListResponse, FeedbackResponse, ProcessingStatusResponse
-from app.schemas.journal import JournalCreate, JournalListResponse, JournalResponse, JournalUpdate
+from app.schemas.journal import JournalCreate, JournalListResponse, JournalResponse, JournalUpdate, TagListResponse, TagResponse
 from app.services import journal_service
 from app.services.process_journal import process_journal
 
 router = APIRouter(prefix="/journals", tags=["journals"])
 
 
-def _journal_to_response(j) -> JournalResponse:
+async def _journal_to_response(j, db: AsyncSession) -> JournalResponse:
+    # Fetch tags for this journal
+    tag_result = await db.execute(
+        select(Tag).join(journal_tags).where(journal_tags.c.journal_id == j.id)
+    )
+    tags = [
+        TagResponse(id=str(t.id), name=t.name)
+        for t in tag_result.scalars().all()
+    ]
     return JournalResponse(
         id=str(j.id),
         user_id=str(j.user_id),
@@ -28,6 +38,7 @@ def _journal_to_response(j) -> JournalResponse:
         created_at=j.created_at,
         updated_at=j.updated_at,
         submitted_at=j.submitted_at,
+        tags=tags,
     )
 
 
@@ -57,7 +68,7 @@ async def create_journal(
             selected_agent_id=body.selected_agent_id,
         )
 
-    return _journal_to_response(journal)
+    return await _journal_to_response(journal, db)
 
 
 @router.get("/export")
@@ -179,8 +190,9 @@ async def list_journals(
     journals, total = await journal_service.get_journals(
         db, user_id=uuid.UUID(user_id), limit=limit, offset=offset
     )
+    responses = [await _journal_to_response(j, db) for j in journals]
     return JournalListResponse(
-        journals=[_journal_to_response(j) for j in journals],
+        journals=responses,
         total=total,
     )
 
@@ -215,10 +227,59 @@ async def get_journals_by_date(
         db, user_id=uuid.UUID(user_id), year=year, month=month, day=day,
         tz_offset_minutes=tz_offset,
     )
+    responses = [await _journal_to_response(j, db) for j in journals]
     return JournalListResponse(
-        journals=[_journal_to_response(j) for j in journals],
+        journals=responses,
         total=len(journals),
     )
+
+
+@router.get("/tags", response_model=TagListResponse)
+async def list_tags(
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all tags for the current user with journal counts."""
+    uid = uuid.UUID(user_id)
+    result = await db.execute(
+        select(
+            Tag.id,
+            Tag.name,
+            func.count(journal_tags.c.journal_id).label("journal_count"),
+        )
+        .outerjoin(journal_tags, Tag.id == journal_tags.c.tag_id)
+        .where(Tag.user_id == uid)
+        .group_by(Tag.id, Tag.name)
+        .order_by(func.count(journal_tags.c.journal_id).desc())
+    )
+    tags = [
+        TagResponse(id=str(row.id), name=row.name, journal_count=row.journal_count)
+        for row in result.all()
+    ]
+    return TagListResponse(tags=tags)
+
+
+@router.get("/by-tag/{tag_id}", response_model=JournalListResponse)
+async def get_journals_by_tag(
+    tag_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get all journals for a specific tag."""
+    uid = uuid.UUID(user_id)
+    tid = uuid.UUID(tag_id)
+    result = await db.execute(
+        select(Journal)
+        .join(journal_tags, Journal.id == journal_tags.c.journal_id)
+        .where(
+            journal_tags.c.tag_id == tid,
+            Journal.user_id == uid,
+        )
+        .order_by(Journal.created_at.desc())
+    )
+    journals = list(result.scalars().all())
+    responses = [await _journal_to_response(j, db) for j in journals]
+    return JournalListResponse(journals=responses, total=len(responses))
 
 
 @router.get("/{journal_id}", response_model=JournalResponse)
@@ -230,7 +291,7 @@ async def get_journal(
     journal = await journal_service.get_journal(db, uuid.UUID(journal_id), uuid.UUID(user_id))
     if journal is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Journal not found")
-    return _journal_to_response(journal)
+    return await _journal_to_response(journal, db)
 
 
 @router.get("/{journal_id}/feedback", response_model=FeedbackListResponse)
@@ -331,7 +392,7 @@ async def update_journal(
             user_id=user_id,
         )
 
-    return _journal_to_response(updated)
+    return await _journal_to_response(updated, db)
 
 
 @router.delete("/{journal_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -428,5 +489,4 @@ async def _delete_evermemos_memories(journal_id: str, user_id: str, journal_text
             )
     except Exception as e:
         logger.warning("Failed to clean up EverMemOS memories for journal %s: %s", journal_id, e)
-
 

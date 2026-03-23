@@ -118,6 +118,13 @@ async def _process(
         except Exception as e:
             logger.warning("Failed to auto-generate title: %s", e)
 
+    # Step 0.5: Auto-generate tags
+    if settings.OPENROUTER_API_KEY:
+        try:
+            await _generate_and_link_tags(db, journal, user_id)
+        except Exception as e:
+            logger.warning("Failed to auto-generate tags: %s", e)
+
     # Step 1: Submit to EverMemOS (if API key is configured)
     memories = []
     if settings.EVERMEMOS_API_KEY:
@@ -215,12 +222,19 @@ async def _generate_agent_checkins(
     user_id: str,
     memories: list,
 ):
-    """Generate proactive check-in messages from all built-in agents for this journal."""
+    """Generate proactive check-in messages from all agents (built-in + user custom) for this journal."""
     from app.models.agent import Agent
     from app.services import agent_service
+    from sqlalchemy import or_
 
     result = await db.execute(
-        select(Agent).where(Agent.is_builtin == True, Agent.is_active == True)
+        select(Agent).where(
+            Agent.is_active == True,
+            or_(
+                Agent.is_builtin == True,
+                Agent.user_id == uuid.UUID(user_id),
+            ),
+        )
     )
     all_agents = list(result.scalars().all())
 
@@ -337,3 +351,53 @@ async def _store_goals_tasks(
         len(extracted.get("tasks", [])),
         journal_id,
     )
+
+
+async def _generate_and_link_tags(
+    db: AsyncSession,
+    journal: Journal,
+    user_id: str,
+):
+    """Generate tags for a journal and link them via journal_tags."""
+    from app.models.tag import Tag, journal_tags
+
+    uid = uuid.UUID(user_id)
+
+    # Fetch existing user tags for reuse
+    result = await db.execute(
+        select(Tag).where(Tag.user_id == uid)
+    )
+    existing_tags_objs = list(result.scalars().all())
+    existing_names = [t.name for t in existing_tags_objs]
+
+    # Ask LLM
+    tag_names = await llm_service.generate_tags(journal.raw_text, existing_names)
+    if not tag_names:
+        return
+
+    # Remove existing associations for this journal (for re-processing)
+    from sqlalchemy import delete as sa_delete
+    await db.execute(
+        sa_delete(journal_tags).where(journal_tags.c.journal_id == journal.id)
+    )
+
+    # Map existing tag names (lowercase) -> Tag objects
+    existing_map = {t.name.lower(): t for t in existing_tags_objs}
+
+    for name in tag_names:
+        tag_obj = existing_map.get(name.lower())
+        if not tag_obj:
+            tag_obj = Tag(user_id=uid, name=name.lower())
+            db.add(tag_obj)
+            await db.flush()  # ensure tag_obj.id is populated
+            existing_map[name.lower()] = tag_obj
+
+        # Insert association
+        await db.execute(
+            journal_tags.insert().values(
+                journal_id=journal.id, tag_id=tag_obj.id
+            )
+        )
+
+    await db.commit()
+    logger.info("Linked %d tags to journal %s: %s", len(tag_names), str(journal.id), tag_names)

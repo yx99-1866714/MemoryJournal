@@ -1,4 +1,4 @@
-import type { Agent, AgentListResponse, AgentMessage, AgentRespondRequest, AgentThread, FeedbackListResponse, Journal, JournalListResponse, ProcessingStatus, TokenResponse, User } from "./types"
+import type { Agent, AgentListResponse, AgentMessage, AgentRespondRequest, AgentThread, FeedbackListResponse, Journal, JournalListResponse, ProcessingStatus, Tag, TokenResponse, User } from "./types"
 import { getStoredToken } from "./tokenStorage"
 
 //const API_BASE = "http://localhost:8000"
@@ -322,4 +322,18 @@ export interface InsightsData {
 
 export async function apiGetInsights(period: "weekly" | "monthly"): Promise<InsightsData> {
   return request<InsightsData>(`/insights/${period}`)
+}
+
+// ---- Tags ----
+
+export interface TagListResponse {
+  tags: Tag[]
+}
+
+export async function apiGetTags(): Promise<TagListResponse> {
+  return request<TagListResponse>("/journals/tags")
+}
+
+export async function apiGetJournalsByTag(tagId: string): Promise<JournalListResponse> {
+  return request<JournalListResponse>(`/journals/by-tag/${tagId}`)
 }

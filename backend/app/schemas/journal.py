@@ -3,6 +3,14 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class TagResponse(BaseModel):
+    id: str
+    name: str
+    journal_count: int = 0
+
+    model_config = {"from_attributes": True}
+
+
 class JournalCreate(BaseModel):
     title: str | None = None
     content: str
@@ -31,6 +39,7 @@ class JournalResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     submitted_at: datetime | None
+    tags: list[TagResponse] = []
 
     model_config = {"from_attributes": True}
 
@@ -38,3 +47,7 @@ class JournalResponse(BaseModel):
 class JournalListResponse(BaseModel):
     journals: list[JournalResponse]
     total: int
+
+
+class TagListResponse(BaseModel):
+    tags: list[TagResponse]

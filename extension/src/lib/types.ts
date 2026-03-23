@@ -17,6 +17,12 @@ export interface AuthState {
 export type JournalStatus = "draft" | "submitted" | "processed" | "failed"
 export type SourceSurface = "popup" | "sidepanel" | "fullpage"
 
+export interface Tag {
+  id: string
+  name: string
+  journal_count?: number
+}
+
 export interface Journal {
   id: string
   user_id: string
@@ -29,6 +35,7 @@ export interface Journal {
   created_at: string
   updated_at: string
   submitted_at: string | null
+  tags: Tag[]
 }
 
 export interface JournalDraft {

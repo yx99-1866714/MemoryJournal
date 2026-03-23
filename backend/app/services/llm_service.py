@@ -52,6 +52,62 @@ async def generate_title(journal_text: str) -> str:
     return title
 
 
+async def generate_tags(journal_text: str, existing_tags: list[str]) -> list[str]:
+    """Generate 1-5 topic tags for a journal entry, reusing existing tags when possible."""
+    model = settings.LLM_MODEL
+    existing_str = ", ".join(f'"{t}"' for t in existing_tags) if existing_tags else "(none yet)"
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a journal categorization assistant. Generate 1-5 short topic tags for the following journal entry.\n\n"
+                "Rules:\n"
+                "- Tags should be broad categories like 'emotional diary', 'work', 'health & fitness', 'home improvement', 'travel', 'finances', 'relationships', 'self-care', 'career', etc.\n"
+                "- Each tag should be 1-3 words, all lowercase\n"
+                "- Reuse existing tags when they fit. Here are the user's existing tags: " + existing_str + "\n"
+                "- Only create a new tag if none of the existing ones are a good fit\n"
+                "- Return ONLY a JSON array of tag strings, no markdown fencing\n"
+                "- Example: [\"emotional diary\", \"relationships\", \"self-care\"]\n"
+            ),
+        },
+        {"role": "user", "content": journal_text[:1500]},
+    ]
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.3,
+        "max_tokens": 100,
+    }
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://memoryjournal.app",
+        "X-Title": "Memory Journal",
+    }
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+        resp = await client.post(OPENROUTER_URL, json=payload, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+    raw = data["choices"][0]["message"]["content"].strip()
+    # Strip markdown fencing if present
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+    tags = json.loads(raw)
+    if not isinstance(tags, list):
+        tags = []
+    # Normalize: lowercase, strip, deduplicate, limit 5
+    seen = set()
+    clean = []
+    for t in tags:
+        t = str(t).strip().lower()[:100]
+        if t and t not in seen:
+            seen.add(t)
+            clean.append(t)
+        if len(clean) >= 5:
+            break
+    logger.info("Generated tags: %s", clean)
+    return clean
+
 async def extract_goals_tasks(journal_text: str) -> dict[str, list]:
     """
     Extract goals and tasks from a journal entry.

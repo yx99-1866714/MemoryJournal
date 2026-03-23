@@ -142,7 +142,7 @@ function Popup() {
           onClick={openFullPage}
           className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition-all flex items-center justify-center gap-2 border border-white/10"
         >
-          <span>📚</span> View History
+          <span>📊</span> Full Dashboard
         </button>
         <button
           onClick={openGoals}

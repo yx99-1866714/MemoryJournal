@@ -59,6 +59,18 @@ export default function JournalCard({ journal, onClick }: Props) {
           {journal.word_count} words
         </p>
       )}
+      {journal.tags && journal.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {journal.tags.map((tag) => (
+            <span
+              key={tag.id}
+              className="text-[10px] px-2 py-0.5 rounded-full bg-primary-50 text-primary-600 font-medium"
+            >
+              #{tag.name}
+            </span>
+          ))}
+        </div>
+      )}
     </button>
   )
 }
