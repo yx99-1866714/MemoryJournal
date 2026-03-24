@@ -13,7 +13,7 @@ import JournalEditor from "~components/JournalEditor"
 import ChatWindow from "~components/ChatWindow"
 import CompanionList from "~components/CompanionList"
 import Layout from "~components/Layout"
-import { apiCreateAgent, apiDeleteAccount, apiDeleteAgent, apiExportJournals, apiGetAgents, apiGetInsights, apiGetJournalsByDate, apiGetJournalsByTag, apiGetTags, apiGetUnreadTotal, apiImportJournals, apiToggleAgent, apiUpdateAgent } from "~lib/api"
+import { apiCreateAgent, apiDeleteAccount, apiDeleteAgent, apiExportJournals, apiGetAgents, apiGetInsights, apiGetJournalStatus, apiGetJournalsByDate, apiGetJournalsByTag, apiGetTags, apiGetUnreadTotal, apiImportJournals, apiToggleAgent, apiUpdateAgent } from "~lib/api"
 import type { InsightsData } from "~lib/api"
 import type { Agent, Journal, Tag } from "~lib/types"
 import { useAuthStore } from "~store/authStore"
@@ -146,13 +146,28 @@ function ViewJournalPage() {
     return () => clearCurrent()
   }, [id])
 
-  // Auto-refresh journal while it's being processed (title, status)
+  // Poll lightweight status endpoint while processing — avoid re-rendering the whole page
+  const [journalStatus, setJournalStatus] = useState<string | null>(null)
+
   useEffect(() => {
-    if (!id || !currentJournal) return
-    if (currentJournal.status !== "submitted") return
-    const interval = setInterval(() => fetchJournal(id), 3000)
+    if (currentJournal) setJournalStatus(currentJournal.status)
+  }, [currentJournal?.id])  // only on initial load
+
+  useEffect(() => {
+    if (!id || journalStatus !== "submitted") return
+    const interval = setInterval(async () => {
+      try {
+        const s = await apiGetJournalStatus(id)
+        if (s.status !== "submitted") {
+          setJournalStatus(s.status)
+          // Fetch full journal once to get final title/metadata
+          fetchJournal(id)
+          clearInterval(interval)
+        }
+      } catch {}
+    }, 3000)
     return () => clearInterval(interval)
-  }, [id, currentJournal?.status])
+  }, [id, journalStatus])
 
   // Sync edit fields when journal data loads or changes (only when not editing)
   useEffect(() => {
@@ -317,6 +332,7 @@ function ViewJournalPage() {
                   onClick={async () => {
                     try {
                       await updateJournal(currentJournal.id, { submit: true })
+                      try { chrome.runtime.sendMessage({ type: "journal-submitted" }) } catch {}
                     } catch {}
                   }}
                   className="hover:bg-surface-100 p-0.5 rounded transition text-surface-400 hover:text-surface-600 flex items-center justify-center"
@@ -333,11 +349,11 @@ function ViewJournalPage() {
         </div>
 
         {/* Follow-up Chat */}
-        {(currentJournal.status === "processed" || currentJournal.status === "submitted") && (
+        {(journalStatus === "processed" || journalStatus === "submitted" || currentJournal.status === "processed" || currentJournal.status === "submitted") && (
           <ChatThread 
             className="flex-1 min-h-[300px]"
             journalId={currentJournal.id} 
-            journalStatus={currentJournal.status} 
+            journalStatus={journalStatus || currentJournal.status} 
           />
         )}
       </div>

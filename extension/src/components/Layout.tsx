@@ -23,11 +23,26 @@ export default function Layout({ children, title, showNav = true }: Props) {
   const { user, logout } = useAuthStore()
   const [unreadTotal, setUnreadTotal] = useState(0)
 
+  // Poll unread count periodically so badge stays in sync
   useEffect(() => {
-    if (user) {
+    if (!user) return
+
+    const fetchUnread = () => {
       apiGetUnreadTotal()
         .then((res) => setUnreadTotal(res.unread_total))
         .catch(() => {})
+    }
+
+    fetchUnread() // initial fetch
+    const interval = setInterval(fetchUnread, 15_000) // every 15s
+
+    // Also refresh on route navigation
+    const onHashChange = () => fetchUnread()
+    window.addEventListener("hashchange", onHashChange)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener("hashchange", onHashChange)
     }
   }, [user])
 

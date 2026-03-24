@@ -172,32 +172,13 @@ async def _process(
     else:
         logger.info("EverMemOS API key not configured, skipping memory submission")
 
-    # Step 4: Generate LLM feedback (if OpenRouter key is configured)
+    # Mark journal as processed (feedback generation removed — no longer used in frontend)
+    journal.status = "processed"
+    await db.commit()
+    logger.info("Journal %s processed successfully", journal_id)
+
+    # Step 5.5: Extract goals and tasks from journal
     if settings.OPENROUTER_API_KEY:
-        logger.info("Generating feedback for journal %s with agent '%s'", journal_id, agent_role)
-        result = await llm_service.generate_feedback(
-            journal_text=journal.raw_text,
-            memories=memories,
-            agent_config=agent_config,
-        )
-
-        # Step 5: Store feedback
-        feedback = JournalFeedback(
-            journal_id=journal.id,
-            agent_id=agent_db_id,
-            agent_role=agent_role,
-            response_text=result["response_text"],
-            response_json=result.get("response_json"),
-            retrieved_memories_json={"memories": memories} if memories else None,
-            model_name=result.get("model_name"),
-        )
-        db.add(feedback)
-
-        journal.status = "processed"
-        await db.commit()
-        logger.info("Journal %s processed successfully with agent '%s'", journal_id, agent_role)
-
-        # Step 5.5: Extract goals and tasks from journal
         try:
             extracted = await llm_service.extract_goals_tasks(journal.raw_text)
             await _store_goals_tasks(
@@ -206,14 +187,11 @@ async def _process(
         except Exception as e:
             logger.warning("Goals/tasks extraction failed (non-fatal): %s", e)
 
-        # Step 6: Generate proactive check-in messages from all agents
+    # Step 6: Generate proactive check-in messages from all agents
+    if settings.OPENROUTER_API_KEY:
         await _generate_agent_checkins(
             db, journal, user_id, memories
         )
-    else:
-        logger.info("OpenRouter API key not configured, skipping feedback generation")
-        journal.status = "submitted"
-        await db.commit()
 
 
 async def _generate_agent_checkins(

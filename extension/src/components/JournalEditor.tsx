@@ -63,6 +63,8 @@ export default function JournalEditor({ sourceSurface, existingDraft, onSaved, c
       setSubmitSuccess(true)
       onSaved?.(journal.id)
       setTimeout(() => setSubmitSuccess(false), 2000)
+      // Notify background service worker to start checking for agent check-ins
+      try { chrome.runtime.sendMessage({ type: "journal-submitted" }) } catch {}
     } catch {
       // error handled by store
     } finally {

@@ -35,12 +35,24 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 })
 
+// ── Message Handler (from frontend) ─────────────────
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type === "journal-submitted") {
+    // Schedule unread checks at 15s, 30s, and 60s to catch agent check-ins
+    // as they finish generating after journal processing
+    setTimeout(() => checkUnreadMessages(), 15_000)
+    setTimeout(() => checkUnreadMessages(), 30_000)
+    setTimeout(() => checkUnreadMessages(), 60_000)
+  }
+})
+
 // ── Notification Click Handler ───────────────────────
 
 chrome.notifications.onClicked.addListener((notificationId) => {
-  // Open the Goals dashboard when a reminder notification is clicked
+  // Open the dashboard when a notification is clicked
   chrome.tabs.create({
-    url: chrome.runtime.getURL("/tabs/index.html#/goals"),
+    url: chrome.runtime.getURL("/tabs/index.html"),
   })
   chrome.notifications.clear(notificationId)
 })
@@ -122,6 +134,8 @@ async function checkReminders() {
 
 // ── Unread Messages Check ────────────────────────────
 
+let previousUnreadTotal = 0
+
 async function checkUnreadMessages() {
   try {
     const stored = await chrome.storage.local.get("token")
@@ -140,7 +154,34 @@ async function checkUnreadMessages() {
     const data = await res.json()
     const unreadTotal = data.unread_total as number
 
-    // Update badge with unread count (overrides reminder badge)
+    // Send notification if unread count increased (new agent check-in)
+    if (unreadTotal > previousUnreadTotal) {
+      const newCount = unreadTotal - previousUnreadTotal
+      const icons = chrome.runtime.getManifest().icons || {}
+      const iconPath = icons["128"] || icons["64"] || icons["48"] || icons["32"] || icons["16"]
+      const iconUrl = iconPath
+        ? chrome.runtime.getURL(iconPath)
+        : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+
+      chrome.notifications.create(`agent-checkin-${Date.now()}`, {
+        type: "basic",
+        iconUrl,
+        title: "💬 New message from your companion",
+        message: newCount === 1
+          ? "An agent has sent you a check-in message"
+          : `${newCount} new check-in messages from your agents`,
+        priority: 1,
+      }, (createdId) => {
+        if (chrome.runtime.lastError) {
+          console.error("Agent notification failed:", chrome.runtime.lastError.message)
+        } else {
+          console.log(`Agent notification "${createdId}" created`)
+        }
+      })
+    }
+    previousUnreadTotal = unreadTotal
+
+    // Update badge with unread count
     if (unreadTotal > 0) {
       chrome.action.setBadgeText({ text: String(unreadTotal) })
       chrome.action.setBadgeBackgroundColor({ color: "#EF4444" }) // red

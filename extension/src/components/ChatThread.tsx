@@ -57,20 +57,48 @@ export default function ChatThread({ journalId, defaultAgentRole, journalStatus,
       .catch(() => setMessages([]))
   }, [selectedAgent, journalId])
 
-  // Auto-poll for messages while processing
+  // Track when journal first became "processed" to continue polling for agent check-ins
+  const [processedAt, setProcessedAt] = useState<number | null>(null)
+  const POLL_GRACE_SECONDS = 60
+  const lastMsgCountRef = useRef(0)
+
   useEffect(() => {
-    if (!isProcessing || !selectedAgent) return
+    if (journalStatus === "processed" && processedAt === null) {
+      setProcessedAt(Date.now())
+    }
+  }, [journalStatus])
+
+  // Auto-poll for messages while processing OR during the grace period after processing
+  useEffect(() => {
+    if (!selectedAgent) return
+
+    const shouldPoll =
+      isProcessing ||
+      (journalStatus === "processed" && processedAt !== null &&
+        (Date.now() - processedAt) < POLL_GRACE_SECONDS * 1000)
+
+    if (!shouldPoll) return
+
     const interval = setInterval(() => {
       apiGetThread(selectedAgent.id, journalId)
         .then((thread) => {
-          if (thread && thread.messages && thread.messages.length > 0) {
-            setMessages(thread.messages)
+          if (thread && thread.messages) {
+            // Only update state if message count changed to avoid re-renders
+            if (thread.messages.length !== lastMsgCountRef.current) {
+              lastMsgCountRef.current = thread.messages.length
+              setMessages(thread.messages)
+            }
           }
         })
         .catch(() => {})
-    }, 3000)
+
+      // Stop polling once grace period expires
+      if (processedAt && (Date.now() - processedAt) >= POLL_GRACE_SECONDS * 1000) {
+        clearInterval(interval)
+      }
+    }, 4000)
     return () => clearInterval(interval)
-  }, [isProcessing, selectedAgent, journalId])
+  }, [isProcessing, selectedAgent, journalId, processedAt, journalStatus])
 
   // Scroll to bottom on new messages
   useEffect(() => {

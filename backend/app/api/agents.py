@@ -43,21 +43,35 @@ async def list_agents(
     for a in agents:
         unread = 0
         try:
-            # Find the free-chat thread (journal_id=NULL) for this agent/user
-            thread_q = select(AgentThread).where(
-                AgentThread.user_id == uuid.UUID(user_id),
-                AgentThread.agent_id == a.id,
-                AgentThread.journal_id.is_(None),
+            # Find the canonical free-chat thread for this agent/user
+            # (most recently updated, to exclude orphaned journal threads)
+            thread_q = (
+                select(AgentThread)
+                .where(
+                    AgentThread.user_id == uuid.UUID(user_id),
+                    AgentThread.agent_id == a.id,
+                    AgentThread.journal_id.is_(None),
+                )
+                .order_by(AgentThread.updated_at.desc())
+                .limit(1)
             )
             thread_result = await db.execute(thread_q)
             thread = thread_result.scalars().first()
 
-            if thread and thread.last_read_at:
-                msg_q = select(func.count()).select_from(AgentMessage).where(
-                    AgentMessage.thread_id == thread.id,
-                    AgentMessage.role == "assistant",
-                    AgentMessage.created_at > thread.last_read_at,
-                )
+            if thread:
+                if thread.last_read_at:
+                    # Count messages newer than last read
+                    msg_q = select(func.count()).select_from(AgentMessage).where(
+                        AgentMessage.thread_id == thread.id,
+                        AgentMessage.role == "assistant",
+                        AgentMessage.created_at > thread.last_read_at,
+                    )
+                else:
+                    # Never read — all assistant messages are unread
+                    msg_q = select(func.count()).select_from(AgentMessage).where(
+                        AgentMessage.thread_id == thread.id,
+                        AgentMessage.role == "assistant",
+                    )
                 unread = (await db.execute(msg_q)).scalar_one()
         except Exception:
             await db.rollback()
@@ -76,27 +90,56 @@ async def get_unread_total(
     db: AsyncSession = Depends(get_db),
 ):
     """Return total unread assistant messages across all agents."""
+    import logging
+    logger = logging.getLogger(__name__)
     from app.models.agent_thread import AgentThread, AgentMessage
+    from app.models.agent import Agent
 
     try:
-        # Get all free-chat threads for this user
-        threads_q = select(AgentThread).where(
-            AgentThread.user_id == uuid.UUID(user_id),
-            AgentThread.journal_id.is_(None),
+        # Get all active agents for this user (built-in + user-created)
+        from sqlalchemy import or_
+        agents_q = select(Agent).where(
+            Agent.is_active == True,
+            or_(Agent.is_builtin == True, Agent.user_id == uuid.UUID(user_id)),
         )
-        threads_result = await db.execute(threads_q)
-        threads = list(threads_result.scalars().all())
+        agents_result = await db.execute(agents_q)
+        agents = list(agents_result.scalars().all())
 
         total = 0
-        for thread in threads:
-            if not thread.last_read_at:
-                continue
-            msg_q = select(func.count()).select_from(AgentMessage).where(
-                AgentMessage.thread_id == thread.id,
-                AgentMessage.role == "assistant",
-                AgentMessage.created_at > thread.last_read_at,
+        for agent in agents:
+            # Find the canonical free-chat thread for this agent
+            # (the one used by the scheduler/ChatWindow, ordered by most recently used)
+            thread_q = (
+                select(AgentThread)
+                .where(
+                    AgentThread.user_id == uuid.UUID(user_id),
+                    AgentThread.agent_id == agent.id,
+                    AgentThread.journal_id.is_(None),
+                )
+                .order_by(AgentThread.updated_at.desc())
+                .limit(1)
             )
-            total += (await db.execute(msg_q)).scalar_one()
+            thread_result = await db.execute(thread_q)
+            thread = thread_result.scalars().first()
+            if not thread:
+                continue
+
+            if thread.last_read_at:
+                msg_q = select(func.count()).select_from(AgentMessage).where(
+                    AgentMessage.thread_id == thread.id,
+                    AgentMessage.role == "assistant",
+                    AgentMessage.created_at > thread.last_read_at,
+                )
+            else:
+                msg_q = select(func.count()).select_from(AgentMessage).where(
+                    AgentMessage.thread_id == thread.id,
+                    AgentMessage.role == "assistant",
+                )
+            count = (await db.execute(msg_q)).scalar_one()
+            if count > 0:
+                logger.info("Unread: agent=%s, thread=%s, last_read=%s, count=%d",
+                           agent.name, thread.id, thread.last_read_at, count)
+            total += count
 
         return {"unread_total": total}
     except Exception:
@@ -449,24 +492,36 @@ async def mark_thread_read(
     db: AsyncSession = Depends(get_db),
 ):
     """Mark a thread as read by setting last_read_at to now."""
+    import logging
+    logger = logging.getLogger(__name__)
     from datetime import datetime, timezone
     from app.models.agent_thread import AgentThread
 
-    query = select(AgentThread).where(
-        AgentThread.user_id == uuid.UUID(user_id),
-        AgentThread.agent_id == uuid.UUID(agent_id),
+    query = (
+        select(AgentThread)
+        .where(
+            AgentThread.user_id == uuid.UUID(user_id),
+            AgentThread.agent_id == uuid.UUID(agent_id),
+        )
     )
     if journal_id:
         query = query.where(AgentThread.journal_id == uuid.UUID(journal_id))
     else:
-        query = query.where(AgentThread.journal_id.is_(None))
+        # Get the canonical free-chat thread (most recently updated)
+        query = query.where(AgentThread.journal_id.is_(None)).order_by(AgentThread.updated_at.desc()).limit(1)
 
     result = await db.execute(query)
     thread = result.scalars().first()
 
     if thread:
-        thread.last_read_at = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc)
+        logger.info("mark_thread_read: agent=%s, thread=%s, old_last_read=%s, new_last_read=%s",
+                   agent_id, thread.id, thread.last_read_at, now)
+        thread.last_read_at = now
         await db.commit()
         return {"status": "ok"}
+    else:
+        logger.warning("mark_thread_read: NO thread found for agent=%s, user=%s, journal_id=%s",
+                      agent_id, user_id, journal_id)
 
     return {"status": "no_thread"}
