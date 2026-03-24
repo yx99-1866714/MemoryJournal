@@ -37,7 +37,10 @@ export default function ChatWindow({
         setLoadingThread(false)
         // Mark thread as read when opening
         apiMarkThreadRead(agent.id)
-          .then(() => { if (onRead) onRead() })
+          .then(() => {
+            if (onRead) onRead()
+            try { chrome.runtime.sendMessage({ type: "thread-read" }) } catch {}
+          })
           .catch(() => {})
       })
   }, [agent.id])

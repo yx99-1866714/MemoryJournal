@@ -45,6 +45,10 @@ chrome.runtime.onMessage.addListener((message) => {
     setTimeout(() => checkUnreadMessages(), 30_000)
     setTimeout(() => checkUnreadMessages(), 60_000)
   }
+  if (message.type === "thread-read") {
+    // Immediately refresh badge when user reads messages
+    checkUnreadMessages()
+  }
 })
 
 // ── Notification Click Handler ───────────────────────
