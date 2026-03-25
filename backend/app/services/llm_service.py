@@ -108,15 +108,35 @@ async def generate_tags(journal_text: str, existing_tags: list[str]) -> list[str
     logger.info("Generated tags: %s", clean)
     return clean
 
-async def extract_goals_tasks(journal_text: str) -> dict[str, list]:
+async def extract_goals_tasks(
+    journal_text: str,
+    existing_goals: list[str] | None = None,
+    existing_tasks: list[str] | None = None,
+) -> dict[str, list]:
     """
     Extract goals and tasks from a journal entry.
+    Deduplicates against existing goals/tasks using semantic comparison.
 
     Returns: {"goals": [{...}], "tasks": [{...}]}
     """
     from datetime import date as _date
 
     today_str = _date.today().isoformat()  # e.g. "2026-03-21"
+
+    # Build dedup context
+    dedup_section = ""
+    if existing_goals or existing_tasks:
+        dedup_section = "\n\nIMPORTANT — The user already has these goals and tasks. Do NOT extract duplicates or semantically equivalent items:\n"
+        if existing_goals:
+            dedup_section += f"Existing goals: {', '.join(existing_goals[:30])}\n"
+        if existing_tasks:
+            dedup_section += f"Existing tasks: {', '.join(existing_tasks[:30])}\n"
+        dedup_section += (
+            "If the journal mentions something equivalent to an existing goal/task "
+            "(e.g. 'Learn Spanish' and 'Practice Spanish on Duolingo' are the same goal), "
+            "do NOT include it in the output. Only return genuinely new items.\n"
+        )
+
     model = settings.LLM_MODEL
     messages = [
         {
@@ -134,8 +154,9 @@ async def extract_goals_tasks(journal_text: str) -> dict[str, list]:
                 "- If recurring, set recurrence_frequency to one of: 'daily', 'weekly', 'monthly', 'yearly'\n"
                 "- If one-time, set recurrence_frequency to null\n"
                 "- If a deadline or due date is mentioned or implied (e.g. 'by Friday', 'next week', 'before March 30'), "
-                "set due_date to the ISO date string (YYYY-MM-DD). If no deadline, set due_date to null\n\n"
-                "Return ONLY valid JSON in this format, no markdown fencing:\n"
+                "set due_date to the ISO date string (YYYY-MM-DD). If no deadline, set due_date to null\n"
+                + dedup_section +
+                "\nReturn ONLY valid JSON in this format, no markdown fencing:\n"
                 '{"goals": [{"title": "short title", "description": "brief context", "recurrence": "one_time", "recurrence_frequency": null, "due_date": null}], '
                 '"tasks": [{"title": "specific action item", "recurrence": "one_time", "recurrence_frequency": null, "due_date": null}]}'
             ),

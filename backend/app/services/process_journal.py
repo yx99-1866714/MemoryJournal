@@ -179,10 +179,32 @@ async def _process(
     await db.commit()
     logger.info("Journal %s processed successfully", journal_id)
 
-    # Step 5.5: Extract goals and tasks from journal
+    # Step 5.5: Extract goals and tasks from journal (with deduplication)
     if settings.OPENROUTER_API_KEY:
         try:
-            extracted = await llm_service.extract_goals_tasks(journal.raw_text)
+            # Fetch existing goals/tasks for deduplication
+            from app.models.goal import Goal
+            from app.models.task import Task
+            existing_goals_result = await db.execute(
+                select(Goal.title).where(
+                    Goal.user_id == uuid.UUID(user_id),
+                    Goal.status.in_(["active", "completed"]),
+                )
+            )
+            existing_tasks_result = await db.execute(
+                select(Task.title).where(
+                    Task.user_id == uuid.UUID(user_id),
+                    Task.status.in_(["open", "completed"]),
+                )
+            )
+            existing_goal_titles = [r[0] for r in existing_goals_result.all()]
+            existing_task_titles = [r[0] for r in existing_tasks_result.all()]
+
+            extracted = await llm_service.extract_goals_tasks(
+                journal.raw_text,
+                existing_goals=existing_goal_titles,
+                existing_tasks=existing_task_titles,
+            )
             await _store_goals_tasks(
                 db, extracted, user_id=user_id, journal_id=journal_id
             )
