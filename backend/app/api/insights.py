@@ -29,6 +29,7 @@ async def _gather_journals(
     journals = result.scalars().all()
     return [
         {
+            "id": str(j.id),
             "title": j.title or "Untitled",
             "content": j.raw_text[:500] if j.raw_text else "",
             "mood": j.mood_label,
@@ -129,14 +130,69 @@ async def _generate_insights(journals: list[dict], period: str) -> dict:
         }
 
 
+async def _get_or_generate_cached_insights(
+    db: AsyncSession, user_id: uuid.UUID, period: str, days: int
+) -> dict:
+    """Check cache using journal hash, generate if missing."""
+    import hashlib
+    from app.models.insight_cache import InsightCache
+
+    journals = await _gather_journals(db, user_id, days=days)
+    
+    # If no journals, return empty state directly (no need to cache)
+    if not journals:
+        return await _generate_insights(journals, period)
+
+    # Hash the ordered IDs of all journals in the rolling window
+    ids_str = ",".join(j["id"] for j in journals)
+    journal_hash = hashlib.sha256(ids_str.encode()).hexdigest()
+
+    # Check cache
+    result = await db.execute(
+        select(InsightCache).where(
+            InsightCache.user_id == user_id,
+            InsightCache.period == period,
+            InsightCache.journal_hash == journal_hash
+        )
+    )
+    cache_entry = result.scalar_one_or_none()
+    
+    if cache_entry:
+        return cache_entry.data
+
+    # Generate new insights
+    insights_data = await _generate_insights(journals, period)
+
+    # Save to cache
+    new_cache = InsightCache(
+        user_id=user_id,
+        period=period,
+        journal_hash=journal_hash,
+        data=insights_data
+    )
+    db.add(new_cache)
+    
+    # Optional: clean up old caches for this user to save space
+    from sqlalchemy import delete
+    await db.execute(
+        delete(InsightCache).where(
+            InsightCache.user_id == user_id,
+            InsightCache.period == period,
+            InsightCache.journal_hash != journal_hash
+        )
+    )
+    await db.commit()
+
+    return insights_data
+
+
 @router.get("/weekly")
 async def weekly_insights(
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    """Generate insights from the past 7 days of journal entries."""
-    journals = await _gather_journals(db, uuid.UUID(user_id), days=7)
-    return await _generate_insights(journals, "weekly")
+    """Generate or retrieve cached insights from the past 7 days."""
+    return await _get_or_generate_cached_insights(db, uuid.UUID(user_id), "weekly", 7)
 
 
 @router.get("/monthly")
@@ -144,6 +200,5 @@ async def monthly_insights(
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    """Generate insights from the past 30 days of journal entries."""
-    journals = await _gather_journals(db, uuid.UUID(user_id), days=30)
-    return await _generate_insights(journals, "monthly")
+    """Generate or retrieve cached insights from the past 30 days."""
+    return await _get_or_generate_cached_insights(db, uuid.UUID(user_id), "monthly", 30)

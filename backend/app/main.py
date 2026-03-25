@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import agents, auth, goals, insights, journals
 from app.config import settings
 from app.db import engine, Base, SessionLocal
-from app.models import User, Journal, Agent, AgentThread, AgentMessage  # noqa: F401 — register models
+from app.models import User, Journal, Agent, AgentThread, AgentMessage, InsightCache  # noqa: F401 — register models
 
 # Configure logging for app modules
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")

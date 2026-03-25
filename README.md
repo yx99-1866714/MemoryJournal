@@ -44,12 +44,19 @@ You can also **create custom agents** with your own name, purpose, tone, and sys
 - **Visual dashboard** with progress tracking, overdue alerts, and task completion
 
 ### 💬 Proactive Check-ins
+![alt text](image-7.png)
 AI agents **proactively reach out** to you based on your emotional state:
 - **Critical urgency** (e.g., breakup, crisis) → check-ins every hour
 - **Elevated urgency** (e.g., stress, anxiety) → check-ins every 24 hours
 - **Normal** → check-ins every 7 days
 
 The check-in scheduler runs in the background and generates contextually-aware messages based on recent journals, chat history, and goals.
+
+### 📊 Insights & Analytics
+![alt text](image-8.png)
+- Weekly pattern analysis and emotional trend tracking
+- Memory-powered insights that surface recurring themes
+- Goal progress summaries
 
 ### 🔴 Unread Message Indicators
 - Red dot badges on agent cards, navbar, dashboard buttons, side panel, and browser popup
@@ -60,11 +67,6 @@ The check-in scheduler runs in the background and generates contextually-aware m
 - Every journal entry is processed and stored as searchable memories via EverMemOS
 - AI agents retrieve relevant memories when responding, enabling long-term continuity
 - Agents reference past conversations and journal entries for deeply personalized responses
-
-### 📊 Insights & Analytics
-- Weekly pattern analysis and emotional trend tracking
-- Memory-powered insights that surface recurring themes
-- Goal progress summaries
 
 ---
 
