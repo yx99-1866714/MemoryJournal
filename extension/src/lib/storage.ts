@@ -2,7 +2,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from "idb"
 
 import type { JournalDraft } from "./types"
 
-interface EverMindDB extends DBSchema {
+interface MySagaDB extends DBSchema {
   drafts: {
     key: string
     value: JournalDraft
@@ -10,11 +10,11 @@ interface EverMindDB extends DBSchema {
   }
 }
 
-let dbPromise: Promise<IDBPDatabase<EverMindDB>> | null = null
+let dbPromise: Promise<IDBPDatabase<MySagaDB>> | null = null
 
-function getDB(): Promise<IDBPDatabase<EverMindDB>> {
+function getDB(): Promise<IDBPDatabase<MySagaDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<EverMindDB>("evermind", 1, {
+    dbPromise = openDB<MySagaDB>("mysaga", 1, {
       upgrade(db) {
         const store = db.createObjectStore("drafts", { keyPath: "id" })
         store.createIndex("by-updated", "updated_at")

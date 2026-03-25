@@ -1,6 +1,6 @@
 {
-  "name": "evermind",
-  "displayName": "EverMind",
+  "name": "mysaga",
+  "displayName": "MySaga",
   "version": "0.1.0",
   "description": "A memory-powered journaling Chrome extension",
   "scripts": {

@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="EverMind API",
+    title="MySaga API",
     version="0.1.0",
     lifespan=lifespan,
 )

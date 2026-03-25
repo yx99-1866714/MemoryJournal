@@ -304,7 +304,7 @@ export async function apiExportJournals(): Promise<void> {
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url
-  a.download = "EverMind_export.json"
+  a.download = "MySaga_export.json"
   a.click()
   URL.revokeObjectURL(url)
 }

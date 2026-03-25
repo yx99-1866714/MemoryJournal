@@ -63,7 +63,7 @@ function Popup() {
       <div className="w-80 p-6 bg-gradient-to-br from-primary-800 to-primary-900">
         <div className="text-center">
           <span className="text-4xl block mb-3">📓</span>
-          <h1 className="text-lg font-bold text-white mb-2">EverMind</h1>
+          <h1 className="text-lg font-bold text-white mb-2">MySaga</h1>
           <p className="text-primary-200/70 text-sm mb-4">Sign in to start journaling</p>
           <button
             onClick={openFullPage}
@@ -81,7 +81,7 @@ function Popup() {
       <div className="flex items-center gap-3 mb-5">
         <span className="text-2xl">📓</span>
         <div>
-          <h1 className="text-base font-bold text-white">EverMind</h1>
+          <h1 className="text-base font-bold text-white">MySaga</h1>
           <p className="text-xs text-primary-200/70">Hi, {user.name}</p>
         </div>
       </div>

@@ -1082,7 +1082,7 @@ function SettingsPage() {
                     const result = await apiImportJournals(data)
                     setImportResult(result)
                   } catch {
-                    alert("Import failed. Make sure the file is a valid EverMind export.")
+                    alert("Import failed. Make sure the file is a valid MySaga export.")
                   }
                   setImporting(false)
                   e.target.value = ""

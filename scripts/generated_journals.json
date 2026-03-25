@@ -2,452 +2,445 @@
   "journals": [
     {
       "title": null,
-      "content": "Rainy Friday. Spent all day at the coffee shop, feet killing me from the rush. That novel cover sketch is coming along—client wants more 'ethereal' vibes, whatever that means. Luna's been my only company tonight, purring like she approves.",
+      "content": "Saturday night and I finally beat that boss in Elden Ring after like 20 tries. Felt good to have control for once. But now my brain's replaying that awkward chat with my roommate earlier—did I say something dumb?",
       "mood": "😌",
       "source": "import",
-      "created_at": "2026-01-23T20:45:00+00:00"
+      "created_at": "2026-01-24T22:45:00+00:00"
     },
     {
-      "title": "Hike with Jordan",
-      "content": "Woke up to clear skies—miracle! Jordan and I hit Forest Park, mud everywhere but his laugh made it worth it. Talked about everything from work stress to dreams of traveling. Feeling a spark, but still guarded. Why can't I just let go?",
-      "mood": "❤️",
+      "title": "Sunday Scroll",
+      "content": "Woke up checking emails—nothing urgent, thank god. Planning to customize my keyboard today, got those new switches ordered. Maybe it'll help with the typing anxiety during calls.",
+      "mood": "🤔",
       "source": "import",
-      "created_at": "2026-01-24T22:10:00+00:00"
+      "created_at": "2026-01-25T08:15:00+00:00"
     },
     {
       "title": null,
-      "content": "Sunday morning yoga flop. Couldn't even hold downward dog without wobbling. App says 'progress takes time'—yeah, right. Need coffee.",
+      "content": "First day back to work blues hit hard. Boss mentioned a team meeting tomorrow and I'm already spiraling about what if I freeze up? Lunch was that safe pad thai delivery.",
       "mood": "😔",
       "source": "import",
-      "created_at": "2026-01-25T09:30:00+00:00"
+      "created_at": "2026-01-26T18:30:00+00:00"
     },
     {
-      "title": "Spanish practice",
-      "content": "Monday blues hit hard. Barista shift dragged, spilled lattes on myself twice. But did 20 mins on Duolingo—conjugated verbs like a pro? Nah, but felt good connecting to Abuela's stories. Portfolio overhaul: sketched three new pieces today. Progress!",
-      "mood": "💪",
-      "source": "import",
-      "created_at": "2026-01-26T18:20:00+00:00"
-    },
-    {
-      "title": "Deadline panic",
-      "content": "Ugh, client emailed revisions for the cover series—'too dark?' It's fantasy, people! Stayed up late tweaking, anxiety buzzing like crazy. Jordan checked in, offered to bring tacos tomorrow. Small things keep me going. The fog in my head is thick tonight.",
+      "title": "Meeting Aftermath",
+      "content": "The meeting wasn't as bad as I thought, but I stuttered on my update. Still thinking about it. Swiped on Tinder tonight—matched with someone, but waiting for a reply is killing me. Typos in my bio probably scared her off.",
       "mood": "😰",
       "source": "import",
-      "created_at": "2026-01-27T23:05:00+00:00"
+      "created_at": "2026-01-27T23:10:00+00:00"
     },
     {
       "title": null,
-      "content": "Baked matcha churros—total disaster, kitchen looks like a snow globe. Shared the edible ones with book club anyway. Laughed so much my sides hurt. Gratitude for these weirdos.",
-      "mood": "😊",
-      "source": "import",
-      "created_at": "2026-01-28T19:50:00+00:00"
-    },
-    {
-      "title": "Yoga win",
-      "content": "Thursday: Nailed a full sun salutation during yoga! Body feels less achy, mind quieter. Update on Jordan—dinner was nice, but he wants to meet my friends soon. Scary, but maybe? Still thinking about that revision email; resubmitted today, fingers crossed.",
-      "mood": "🤔",
-      "source": "import",
-      "created_at": "2026-01-29T21:15:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Friday. Podcast on Spanish lit inspired me—practiced phrases all morning. Work gig starts soon, bracing for hipster orders.",
-      "mood": "😴",
-      "source": "import",
-      "created_at": "2026-01-30T08:15:00+00:00"
-    },
-    {
-      "title": "Midnight thoughts",
-      "content": "Client loved the revisions! Popped champagne alone with Luna—felt like a win after weeks of doubt. Jordan's text: 'Proud of you.' Heart flutter. But insomnia hits; why does success feel so fragile? Dreaming of that children's book series more vividly now, deserts calling me home.",
-      "mood": "🎉",
-      "source": "import",
-      "created_at": "2026-01-31T00:30:00+00:00"
-    },
-    {
-      "title": "Weekend plans",
-      "content": "Super Bowl Sunday? Nah, I'm out. Planning a solo hike instead, maybe sketch some ideas for portfolio. Yoga tomorrow, no skips. Relationship with Jordan: talking about a getaway—nervous excitement. Life's not slipping; it's just rainy.",
+      "content": "Midday break. Tried cooking that chicken recipe—followed it to the letter, turned out okay. But 'add salt to taste' made me sweat; ended up googling it three times.",
       "mood": "😤",
       "source": "import",
-      "created_at": "2026-02-01T17:40:00+00:00"
+      "created_at": "2026-01-28T12:45:00+00:00"
+    },
+    {
+      "title": "App Anxiety",
+      "content": "She texted back! We chatted a bit, but now I'm overthinking every response. Work project is piling up—deadline Friday, and I hate open-ended tasks. Need to game later to unwind.",
+      "mood": "😰",
+      "source": "import",
+      "created_at": "2026-01-29T20:00:00+00:00"
     },
     {
       "title": null,
-      "content": "Monday again. Woke up to rain pattering on the window, Luna staring at me like I owe her breakfast. Feet already ache thinking about the shift, but gotta push through—coffee first.",
+      "content": "Friday finally. Finished most of the code, boss liked it in Slack. But the match ghosted me after I suggested coffee—knew the unknowns would bite. Keyboard build almost done, feels satisfying.",
       "mood": "😔",
       "source": "import",
-      "created_at": "2026-02-02T07:45:00+00:00"
+      "created_at": "2026-01-30T21:30:00+00:00"
     },
     {
-      "title": "Yoga Win",
-      "content": "Finally nailed that sun salutation sequence without wobbling! Body feels looser, mind a bit quieter. Still rainy out, but inside I'm glowing a little. Jordan texted about hiking this weekend—nervous but excited.",
+      "title": "Weekend Start",
+      "content": "No work alarm! Slept in a bit. Gonna binge that show tonight—safe reruns help with the sleep transition. Reflecting on the week: progress on hobbies, but social stuff still sucks.",
+      "mood": "😌",
+      "source": "import",
+      "created_at": "2026-01-31T10:20:00+00:00"
+    },
+    {
+      "title": "Gratitude Moment",
+      "content": "Sunday evening. Cooked pancakes from a precise recipe—didn't burn them! Grateful for remote work keeping the chaos low. Maybe try dating app again tomorrow, but smaller steps.",
       "mood": "😊",
       "source": "import",
-      "created_at": "2026-02-03T20:15:00+00:00"
+      "created_at": "2026-02-01T19:45:00+00:00"
+    },
+    {
+      "title": "Monday Motivation?",
+      "content": "Back to the grind. Project update went smooth, feeling a bit more confident. But that loop of worst-case scenarios about the weekend's nothing plans is starting already. Push through.",
+      "mood": "💪",
+      "source": "import",
+      "created_at": "2026-02-02T17:00:00+00:00"
     },
     {
       "title": null,
-      "content": "Spilled a latte on my sketchbook at work. Ruined a half-done doodle of Luna as a desert fox. Frustrated, but hey, accidents happen. Need new inspo for the portfolio overhaul.",
-      "mood": "😤",
+      "content": "Work was okay today, but that standup meeting had me sweating over my update. Stuttered a bit, but no one seemed to notice. Still replaying it in my head though.",
+      "mood": "😰",
       "source": "import",
-      "created_at": "2026-02-04T13:20:00+00:00"
+      "created_at": "2026-02-03T20:45:00+00:00"
     },
     {
-      "title": "Date Night Reflections",
-      "content": "Dinner with Jordan was nice—shared tacos and talked about his latest eco-project. His hand on mine felt... safe? Still guarded, but the flutters are real. Wonder if I should mention book club soon. Home now, baking failed again—churros too soggy. Luna doesn't care.",
-      "mood": "❤️",
+      "title": "Morning dread",
+      "content": "Woke up to an email from boss about deadline—heart raced. Why can't things just be predictable? Gonna chug coffee and dive into code.",
+      "mood": "😔",
       "source": "import",
-      "created_at": "2026-02-05T22:30:00+00:00"
+      "created_at": "2026-02-04T08:15:00+00:00"
     },
     {
       "title": null,
-      "content": "Duolingo streak broken. Forgot to practice Spanish yesterday amid deadline panic. That fantasy cover approval still buzzing, but now client's asking for tweaks on the series. Breathe, Elena.",
+      "content": "Beat that boss in Elden Ring finally. Felt like a win after the ghosting fiasco last week. Maybe I can handle real life too? Nah, probably not.",
+      "mood": "😌",
+      "source": "import",
+      "created_at": "2026-02-05T23:30:00+00:00"
+    },
+    {
+      "title": "Lunch thoughts",
+      "content": "Ordered pad thai again—recipe in app is exact, no surprises. Thinking about swiping on Tinder but what if another ghost? Ugh.",
       "mood": "🤔",
       "source": "import",
-      "created_at": "2026-02-06T09:10:00+00:00"
+      "created_at": "2026-02-06T13:20:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Keyboard clicks are so satisfying after a crap day. Teammate's Slack joke went over my head, felt dumb. Weekend can't come soon enough.",
+      "mood": "😤",
+      "source": "import",
+      "created_at": "2026-02-07T19:10:00+00:00"
+    },
+    {
+      "title": "Saturday unwind",
+      "content": "Cooked that chicken recipe to the letter—turned out perfect. No disasters. Watched old episodes, but mind keeps wandering to dating apps. Should I message someone?",
+      "mood": "😌",
+      "source": "import",
+      "created_at": "2026-02-08T22:50:00+00:00"
+    },
+    {
+      "title": "Sunday blues early",
+      "content": "Slept okay but dreaming about work meetings. Gonna game all day to forget. Update on keyboard: added blue switches, love it.",
+      "mood": "😴",
+      "source": "import",
+      "created_at": "2026-02-09T07:45:00+00:00"
+    },
+    {
+      "title": "Small victory",
+      "content": "Boss praised my code in chat! First time in weeks. Heart still pounding from nerves, but yay? Might try yoga app for anxiety.",
+      "mood": "😊",
+      "source": "import",
+      "created_at": "2026-02-10T18:30:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Swiped right on a girl who likes RPGs. Matched! But now waiting for reply is killing me. Don't overthink, Alex.",
+      "mood": "😰",
+      "source": "import",
+      "created_at": "2026-02-11T21:15:00+00:00"
+    },
+    {
+      "title": "Late night reflection",
+      "content": "She texted back—casual chat going okay so far. Not ghosted yet! Work week's ahead, but feeling a tiny bit hopeful. Grateful for routines keeping me sane.",
+      "mood": "❤️",
+      "source": "import",
+      "created_at": "2026-02-12T00:05:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Woke up to an email from boss about next week's sprint. Heart racing already— what if I mess up the demo? Need to plan every slide today.",
+      "mood": "😰",
+      "source": "import",
+      "created_at": "2026-02-13T07:45:00+00:00"
+    },
+    {
+      "title": "Valentine's Blues",
+      "content": "Single on V-day sucks. That new match, Sarah, messaged about our fave RPGs last night—Elden Ring bosses are brutal but fun. Replied but now overthinking if it was witty enough. Ordered pizza, no cooking tonight.",
+      "mood": "😔",
+      "source": "import",
+      "created_at": "2026-02-14T20:15:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Lunch delivered, ate while staring at code. Sarah asked if I'd play co-op sometime. Panic mode: what if I'm bad at it? Said maybe, now regretting.",
+      "mood": "🤔",
+      "source": "import",
+      "created_at": "2026-02-15T12:45:00+00:00"
+    },
+    {
+      "title": "Late Night Loop",
+      "content": "Still thinking about that standup comment last week—did boss mean I'm slacking? Scrolled Reddit till eyes hurt. Tomorrow's Monday, ugh. Bedtime routine failed again.",
+      "mood": "😴",
+      "source": "import",
+      "created_at": "2026-02-16T23:30:00+00:00"
+    },
+    {
+      "title": "Work Win?",
+      "content": "Fixed a bug that's been haunting the project. Boss slack'd 'nice catch!' Feels good, but waiting for more feedback is killing me. Gaming later to unwind—need that save point comfort.",
+      "mood": "😌",
+      "source": "import",
+      "created_at": "2026-02-17T17:20:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Morning check: Sarah suggested a virtual hangout this weekend. Excited but terrified—voice chat? What do I say? Deep breaths, Alex.",
+      "mood": "😰",
+      "source": "import",
+      "created_at": "2026-02-18T08:10:00+00:00"
+    },
+    {
+      "title": "Keyboard Therapy",
+      "content": "Tinkered with my mechanical keyboard setup—new switches feel clicky perfect. Distracted from deadline stress. Update on Sarah: we chatted more, she's cool. Hope I don't screw it up.",
+      "mood": "💪",
+      "source": "import",
+      "created_at": "2026-02-19T21:50:00+00:00"
+    },
+    {
+      "title": "Boring Thursday",
+      "content": "Routine day. Cooked that precise stir-fry recipe, no disasters. Work's okay, no meetings. Just existing.",
+      "mood": "😌",
+      "source": "import",
+      "created_at": "2026-02-20T13:00:00+00:00"
     },
     {
       "title": "Weekend Vibes",
-      "content": "Off today! Curled up with Octavia Butler's new reread, sketching magical desert scenes from memory. New Mexico nostalgia hitting hard—maybe call Mom soon? Yoga tomorrow, rain or not.",
-      "mood": "😌",
-      "source": "import",
-      "created_at": "2026-02-07T18:45:00+00:00"
-    },
-    {
-      "title": "Hike Hangover",
-      "content": "Jordan and I did Forest Park—mud everywhere, but the views! Laughed about slipping on roots, shared stories from childhood. Feeling closer, less wary. Legs sore, heart full. Still thinking about introducing him to the group.",
-      "mood": "💪",
-      "source": "import",
-      "created_at": "2026-02-08T23:00:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Barista blues: endless pour-overs for pretentious types. Sketched a quick portrait of a customer during lull—might use for portfolio. Anxiety creeping in about laptop savings; only $300 so far.",
-      "mood": "😰",
-      "source": "import",
-      "created_at": "2026-02-09T12:05:00+00:00"
-    },
-    {
-      "title": "Book Club Magic",
-      "content": "Loved tonight's discussion on Jemisin—resilience themes hit home. Shared my latest sketches; friends hyped about the children's book idea. Baked matcha treats that actually worked! Grateful for this crew.",
+      "content": "Friday finally! Beat a tough Elden Ring boss after 20 tries—small victory. Sarah confirmed tomorrow's voice chat. Heart pounding, but maybe it'll be fun? Fingers crossed.",
       "mood": "🎉",
       "source": "import",
-      "created_at": "2026-02-10T21:50:00+00:00"
+      "created_at": "2026-02-21T22:40:00+00:00"
     },
     {
-      "title": "Fresh Start",
-      "content": "Slept okay, no insomnia last night. Revised those cover tweaks—client loved them! Spanish app back on track; practiced greetings. Planning a solo walk later. Things feel... steady.",
-      "mood": "😊",
-      "source": "import",
-      "created_at": "2026-02-11T08:30:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Rainy Thursday slog. Spilled foam on a customer's sweater today—apologized profusely, they laughed it off. Jordan texted about a hike this weekend, butterflies. Yoga felt good tonight, held downward dog longer. Grateful for small wins.",
-      "mood": "😌",
-      "source": "import",
-      "created_at": "2026-02-12T20:45:00+00:00"
-    },
-    {
-      "title": "Friday fog",
-      "content": "Woke up to Luna staring at me like I owe her breakfast. Coffee shop's buzzing with weekend vibes, but my feet already hurt thinking about the shift. Still thinking about that spilled latte yesterday—why am I such a klutz?",
-      "mood": "😴",
-      "source": "import",
-      "created_at": "2026-02-13T08:15:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Long day, but Jordan came by the shop after closing. Shared churros I baked last night—crispy outside, gooey inside. Talked about his work trip next month. Feeling closer, but wary. Spanish app: practiced greetings, rusty but fun.",
+      "title": "Chat Aftermath",
+      "content": "Talked to Sarah for an hour—laughed about game glitches. No awkward silences like I feared! Feeling hopeful, though now replaying every word in my head. Progress?",
       "mood": "❤️",
       "source": "import",
-      "created_at": "2026-02-13T22:30:00+00:00"
-    },
-    {
-      "title": "Valentine's",
-      "content": "Jordan surprised me with a picnic in the park—rain held off, miracle. We hiked a bit, held hands. First real kiss that felt... right. Heart racing, but good scared. Baked heart-shaped cookies earlier, Luna stole one. Magic tonight.",
-      "mood": "🎉",
-      "source": "import",
-      "created_at": "2026-02-14T19:00:00+00:00"
+      "created_at": "2026-02-22T19:30:00+00:00"
     },
     {
       "title": null,
-      "content": "Sunday lazy. Sketched some desert scenes from home memories while listening to Spanish podcast. Yoga skipped—rain again. Portfolio pieces coming together, but deadline looming for the novel covers. Need to focus.",
+      "content": "Woke up to another email from boss about the sprint demo tomorrow. Heart racing already. Just gonna stick to my code and hope no questions come my way.",
+      "mood": "😰",
+      "source": "import",
+      "created_at": "2026-02-23T07:45:00+00:00"
+    },
+    {
+      "title": "Demo Day",
+      "content": "The demo went okay? Boss said 'good job' but I keep replaying that awkward pause when I explained the bug fix. Sarah texted back finally, wants to chat about Elden Ring bosses tonight. Kinda excited but what if I say something dumb?",
       "mood": "🤔",
-      "source": "import",
-      "created_at": "2026-02-15T14:20:00+00:00"
-    },
-    {
-      "title": "Monday blues",
-      "content": "Ugh, back to the grind. Overslept, rushed to work. Customer complained about wait time—took it personally. Anxiety creeping in, why can't I just be enough? Texted Jordan, he cheered me up.",
-      "mood": "😔",
-      "source": "import",
-      "created_at": "2026-02-16T07:50:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Evening better. Did yoga, breathed through the frustration. Updated Spanish vocab—can say 'I miss New Mexico' now. Thinking about calling Mom soon. Work sketches: finally nailed the dragon's wings for the book cover. Progress!",
-      "mood": "💪",
-      "source": "import",
-      "created_at": "2026-02-16T21:10:00+00:00"
-    },
-    {
-      "title": "Midweek ramble",
-      "content": "Barista shift dragged, but book club tonight was a highlight. Laughed so hard over Jemisin's latest twists. Jordan mentioned a getaway idea—coastal cabin? Excited but nervous about committing. Baked vegan tres leches, shared leftovers.",
-      "mood": "😊",
-      "source": "import",
-      "created_at": "2026-02-17T18:40:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Late night. Freelance revisions came back—client wants more 'whimsy' in the covers. Frustrating, but I'll tweak tomorrow. Yoga streak broken by exhaustion. Luna curled up with me, purring. Simple joys.",
-      "mood": "😌",
-      "source": "import",
-      "created_at": "2026-02-18T23:05:00+00:00"
-    },
-    {
-      "title": "Thursday thoughts",
-      "content": "Morning sketch session: urban fox in the rain. Inspired by Portland streets. Spanish call with auntie—stumbled but understood her stories. Nostalgia hit hard, tears. Jordan's supportive, planning that hike update.",
-      "mood": "😰",
-      "source": "import",
-      "created_at": "2026-02-19T09:30:00+00:00"
-    },
-    {
-      "title": "Friday unwind",
-      "content": "Work wrap-up: approved sketches sent! Fist pump. Jordan and I grabbed tacos, talked dreams—his enviro stuff, my book ideas. Feeling safe with him. Yoga tomorrow, promise. Weekend excitement building.",
-      "mood": "❤️",
-      "source": "import",
-      "created_at": "2026-02-20T20:15:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Hiked Forest Park with Jordan—mud everywhere, laughed til sore. Spotted wildflowers for sketches. Spanish app streak back on track. Life's messy but beautiful. Grateful.",
-      "mood": "😊",
-      "source": "import",
-      "created_at": "2026-02-21T16:45:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Sunday evening slump. Rain pounding the window like it's mad at me. Sketched a quick desert scene to remember home—felt good, but now Luna's staring at my half-eaten churro. Jordan texted about a hike next weekend; heart did a little flip. Still buzzing from that kiss last week.",
-      "mood": "❤️",
-      "source": "import",
-      "created_at": "2026-02-22T20:45:00+00:00"
-    },
-    {
-      "title": "Morning fog",
-      "content": "Woke up to more drizzle. Coffee's brewing, yoga mat out but ugh, motivation low. Gotta push through that routine today—three times a week, remember?",
-      "mood": "😴",
-      "source": "import",
-      "created_at": "2026-02-23T07:30:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Did yoga after shift, held downward dog longer than last time. Feet killing from barista rush—spilled latte on a customer's scarf, awkward af. But portfolio piece #12 done: revised the dragon for the book cover. Feels solid. Spanish app: learned 'recuerdos'—memories. Fitting.",
-      "mood": "💪",
-      "source": "import",
-      "created_at": "2026-02-23T22:10:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Monday blues hit hard. Work dragged, customers extra picky. Doodled a grumpy hipster in my notebook during break. Jordan called—talked dreams, his job sounds intense but he's sweet. Miss NM tonight.",
-      "mood": "😔",
       "source": "import",
       "created_at": "2026-02-24T18:20:00+00:00"
     },
     {
-      "title": "Baking fail",
-      "content": "Tried matcha churros—total disaster, kitchen looks like a flour bomb went off. Luna's judging hard. Ate the salvageable ones while reading Jemisin; her worlds make mine feel small but inspired. Deadline looming for covers, need to focus tomorrow.",
-      "mood": "😤",
-      "source": "import",
-      "created_at": "2026-02-25T21:05:00+00:00"
-    },
-    {
       "title": null,
-      "content": "Book club was lit—laughed so much over Butler's twists. Shared my sketch of a resilient kid in the desert; friends hyped it for my book idea. Yoga skipped again, rain excuse. Starting to feel guilty.",
-      "mood": "😊",
-      "source": "import",
-      "created_at": "2026-02-26T19:50:00+00:00"
-    },
-    {
-      "title": "Quick note",
-      "content": "Early shift. Coffee strong. Thinking about Jordan's getaway idea—maybe coast? Nervous but excited.",
-      "mood": "🤔",
-      "source": "import",
-      "created_at": "2026-02-27T08:15:00+00:00"
-    },
-    {
-      "title": "Late night ramble",
-      "content": "Long day, but breakthrough on the fairy illustration—colors popped just right, client might love it. Practiced Spanish podcast: conjugated verbs, felt rusty but progress. Anxiety creeping in about money—laptop dying soon. Breathe, Elena. The fog lifts, remember? Jordan's text: 'Can't wait for Saturday.' Warmth in this gloom.",
+      "content": "Lunch ordered, same Thai place. Still thinking about Sarah's laugh on the call. Maybe I should suggest a virtual date? No, too soon.",
       "mood": "😌",
       "source": "import",
-      "created_at": "2026-02-27T23:30:00+00:00"
+      "created_at": "2026-02-25T12:00:00+00:00"
     },
     {
-      "title": null,
-      "content": "Hiked Forest Park solo—mud everywhere, but wildflowers peeking through. Sketched one for reference. Yoga tomorrow for sure. Still thinking about that book club feedback; maybe pitch my series idea sooner.",
-      "mood": "🎉",
-      "source": "import",
-      "created_at": "2026-02-28T20:00:00+00:00"
-    },
-    {
-      "title": "Date night vibes",
-      "content": "Jordan and I grabbed tacos—fought over the last one, laughed till my sides hurt. Talked trust, past breakups; scary but he gets it. First real deep dive. Home now, Luna curled up. Heart full, but wary—don't mess this up.",
-      "mood": "❤️",
-      "source": "import",
-      "created_at": "2026-03-01T22:45:00+00:00"
-    },
-    {
-      "title": "Frustration peak",
-      "content": "Client revisions on covers: 'Too vibrant?' Argh, perfectionism killing me. Skipped yoga, baked instead—vegan tres leches worked! Shared pic with fam, mom replied in Spanish. Practiced responding. Small win.",
-      "mood": "😰",
-      "source": "import",
-      "created_at": "2026-03-02T17:30:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Wrapped up portfolio piece #15—desert magic kid, inspired by roots. Yoga streak back: felt centered. Jordan planning our trip—Oregon coast, yes! Life's messy, but these threads weaving tighter. Grateful for the rain; it makes the sunrises sharper.",
-      "mood": "😊",
-      "source": "import",
-      "created_at": "2026-03-03T21:15:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Ugh, Wednesday drag. Spilled latte on a customer's sketchbook today—apologized a million times, felt like an idiot. But Jordan texted about the coast trip, maybe next weekend? That lifted the gloom a bit.",
+      "title": "Late Night Thoughts",
+      "content": "Chatted with Sarah for an hour again. She's funny, shares my hate for vague quests in games. But now I'm overthinking if she really likes me or just being nice. Can't sleep.",
       "mood": "😔",
       "source": "import",
-      "created_at": "2026-03-04T20:45:00+00:00"
-    },
-    {
-      "title": "Morning fog",
-      "content": "Rain pounding the window, Luna's hiding under the bed. Quick yoga session felt good though—held downward dog without wobbling. Off to work, fingers crossed no more spills.",
-      "mood": "😌",
-      "source": "import",
-      "created_at": "2026-03-05T08:30:00+00:00"
+      "created_at": "2026-02-26T23:15:00+00:00"
     },
     {
       "title": null,
-      "content": "Spent the afternoon tweaking that dragon sketch for the novel covers. It's coming together, but the colors are fighting me. Jordan came over after my shift; we baked those matcha churros—total mess, but his laugh made it worth it. ❤️",
-      "mood": "❤️",
-      "source": "import",
-      "created_at": "2026-03-06T22:10:00+00:00"
-    },
-    {
-      "title": "Weekend eve",
-      "content": "Feet killing me from double shift, but portfolio's shaping up—added three new pieces inspired by NM deserts. Practiced Spanish on the app; conjugated verbs like a pro today. Still thinking about that spilled coffee incident, lol.",
+      "content": "Work's piling up with new tickets. Fixed that login glitch though, felt good. Keyboard clicks are soothing me through this.",
       "mood": "💪",
       "source": "import",
-      "created_at": "2026-03-07T19:20:00+00:00"
+      "created_at": "2026-02-27T09:30:00+00:00"
+    },
+    {
+      "title": "Friday Relief",
+      "content": "Weekend! Cooked that exact pasta recipe, no disasters. Sarah asked if I'd play co-op sometime. Co-op? In Elden Ring? Terrifying but yeah, I said maybe. Heart pounding.",
+      "mood": "❤️",
+      "source": "import",
+      "created_at": "2026-02-28T20:45:00+00:00"
     },
     {
       "title": null,
-      "content": "Saturday hike in Forest Park—mud everywhere, but the ferns were magical. Jordan and I talked dreams; he wants to see my book ideas. Anxiety creeping in about opening up, but it felt right.",
+      "content": "Sunday gaming binge. Leveled up my character, total control. Wish real life had save points. Update on Sarah: she sent a meme, laughed out loud.",
       "mood": "😊",
       "source": "import",
-      "created_at": "2026-03-08T21:05:00+00:00"
+      "created_at": "2026-03-01T11:00:00+00:00"
     },
     {
-      "title": "Late night ramble",
-      "content": "Book club was a highlight—discussed Jemisin's Broken Earth, hit too close on resilience themes. But deadline for revisions looms; client's notes on the cover series are nitpicky. Why do I doubt myself every time? The rain's relentless tonight, mirroring my mood. Need to breathe.",
-      "mood": "🤔",
-      "source": "import",
-      "created_at": "2026-03-09T23:50:00+00:00"
-    },
-    {
-      "title": "Quick note",
-      "content": "Yoga skipped—too tired after barista rush. Baked vegan tres leches instead; Luna stole a bite, judgmental stare included.",
-      "mood": "😴",
-      "source": "import",
-      "created_at": "2026-03-10T17:15:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Breakthrough on the illustrations—nailed the mystical kid portrait, client loved the first draft! Jordan confirmed coast plans; packing list started. Spanish podcast had me laughing at my accent, but progress.",
-      "mood": "🎉",
-      "source": "import",
-      "created_at": "2026-03-11T20:30:00+00:00"
-    },
-    {
-      "title": "Sunday blues early",
-      "content": "Slept in, but now the week's looming. Frustrated with procrastination on portfolio overhaul—why can't I just do it? Grateful for Luna's cuddles though.",
+      "title": "Monday Blues",
+      "content": "Back to emails. Boss wants status update meeting. Why can't it just be async? Feel like hiding under desk.",
       "mood": "😤",
       "source": "import",
-      "created_at": "2026-03-12T09:10:00+00:00"
+      "created_at": "2026-03-02T08:00:00+00:00"
     },
     {
-      "title": "Reflecting",
-      "content": "Evening walk cleared my head; streetlights on puddles like stars. Update on yoga: did two sessions this week, feeling less anxious. Jordan and I video-called about the trip—excited but scared of getting too close. This life's messy, but mine.",
-      "mood": "😌",
-      "source": "import",
-      "created_at": "2026-03-13T22:40:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Saturday hike with Jordan was perfect—rain held off, we talked about the coast trip next month. Luna's been extra clingy since I got back, like she missed the fresh air too. Feeling that rare buzz of contentment.",
-      "mood": "😊",
-      "source": "import",
-      "created_at": "2026-03-14T20:45:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Morning yoga done, held downward dog longer today. Coffee shift later—hoping for fewer mansplainers.",
-      "mood": "💪",
-      "source": "import",
-      "created_at": "2026-03-15T09:15:00+00:00"
-    },
-    {
-      "title": "Dragon Sketch Frustration",
-      "content": "Spent all day on that dragon illustration revision—client wants 'more menace,' but it looks like a grumpy lizard now. Why do I overthink this? Procrastinating portfolio again. Need to breathe.",
-      "mood": "😔",
-      "source": "import",
-      "created_at": "2026-03-16T22:30:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Baked vegan churros, turned out soggy but shared with book club anyway. Laughed about it. Still thinking about Jordan's text from yesterday—his vulnerability is scary but good.",
-      "mood": "🤔",
-      "source": "import",
-      "created_at": "2026-03-17T18:20:00+00:00"
-    },
-    {
-      "title": "Midweek Blues",
-      "content": "Rain pounding, skipped yoga because feet hurt from barista grind. Spanish app felt pointless tonight—stumbled on basic phrases. Am I really progressing or just spinning wheels? Jordan called, that helped a bit.",
+      "title": "Progress?",
+      "content": "Meeting wasn't bad, got praise on the sprint. Sarah and I scheduled a voice call for tomorrow - and she mentioned coffee sometime? IRL? Panicking but trying to stay calm. Tinkered with keyboard switches instead of freaking out.",
       "mood": "😰",
       "source": "import",
-      "created_at": "2026-03-18T23:10:00+00:00"
+      "created_at": "2026-03-03T22:30:00+00:00"
     },
     {
       "title": null,
-      "content": "Breakthrough on the fairy cover—finally captured that ethereal glow. Client might love it. Grateful for these wins amid the chaos.",
-      "mood": "🎉",
-      "source": "import",
-      "created_at": "2026-03-19T21:00:00+00:00"
-    },
-    {
-      "title": "Morning Ramble",
-      "content": "Woke up anxious about the novel series deadline next week. Luna judged my half-eaten toast. Planning a quick walk later to clear head—Portland's gloom mirrors my mood sometimes.",
-      "mood": "😌",
-      "source": "import",
-      "created_at": "2026-03-20T10:30:00+00:00"
-    },
-    {
-      "title": "Date Night Vibes",
-      "content": "Taco night with Jordan—his stories about environmental stuff always spark ideas for sketches. Discussed trust more; feels like we're building something real. Heart's a little lighter.",
-      "mood": "❤️",
-      "source": "import",
-      "created_at": "2026-03-21T19:45:00+00:00"
-    },
-    {
-      "title": null,
-      "content": "Insomnia hit hard—tossed thinking if freelancing's sustainable. Read some Butler instead; her worlds make mine feel small but doable. Tomorrow's yoga, no excuses.",
+      "content": "Call with Sarah was great, talked recipes too - she likes precise ones like me. But now brain's looping on coffee idea. What if I spill something? Or worse, awkward silence? Need sleep but re-watching old show.",
       "mood": "😴",
       "source": "import",
-      "created_at": "2026-03-22T00:15:00+00:00"
+      "created_at": "2026-03-04T00:15:00+00:00"
     },
     {
-      "title": "Gratitude Burst",
-      "content": "Nailed Spanish convo with app today—talked about family recipes! Hike in Forest Park cleared the week's fog. Portfolio piece done, coast trip plans solid. Life's messy but mine.",
+      "title": null,
+      "content": "Woke up to Sarah's message replaying in my head. She suggested coffee this weekend—am I ready for that? Heart racing just thinking about it.",
+      "mood": "😰",
+      "source": "import",
+      "created_at": "2026-03-05T07:45:00+00:00"
+    },
+    {
+      "title": "Lunch Blues",
+      "content": "Ordered pad thai again, left at door. Boss's email about the demo tomorrow has me spiraling—what if I freeze up on the call?",
+      "mood": "😔",
+      "source": "import",
+      "created_at": "2026-03-06T12:40:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Demo went okay, I think? Got a 'good job' in Slack. Still overthinking that pause when I explained the bug fix. Sarah texted back—said she's free Saturday. Oh god.",
+      "mood": "🤔",
+      "source": "import",
+      "created_at": "2026-03-07T18:15:00+00:00"
+    },
+    {
+      "title": "Late Night Scroll",
+      "content": "Couldn't sleep, watched old episodes of that show. Updated my keyboard switches today, feels smoother. But Sarah... what if conversation dies at coffee?",
+      "mood": "😴",
+      "source": "import",
+      "created_at": "2026-03-08T22:30:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Monday already? Weekend plans looming. Messaged Sarah yes to coffee. Now panicking about outfit and small talk.",
+      "mood": "😰",
+      "source": "import",
+      "created_at": "2026-03-09T08:00:00+00:00"
+    },
+    {
+      "title": "Evening Reflection",
+      "content": "Work was a grind, deadline pushed back thank god. Cooked that chicken recipe—measured everything perfectly. Still buzzing about tomorrow's meetup with Sarah.",
+      "mood": "😌",
+      "source": "import",
+      "created_at": "2026-03-09T20:45:00+00:00"
+    },
+    {
+      "title": "Post-Coffee Jitters",
+      "content": "Met Sarah! It was... nice? We talked games for an hour, laughed about Elden Ring fails. Didn't screw up too bad. Heart still pounding though.",
+      "mood": "❤️",
+      "source": "import",
+      "created_at": "2026-03-10T17:30:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Replaying coffee date in my head—did she seem bored? Work bug hunt was therapeutic today.",
+      "mood": "😔",
+      "source": "import",
+      "created_at": "2026-03-11T13:20:00+00:00"
+    },
+    {
+      "title": "Can't Sleep",
+      "content": "Sarah suggested gaming together online this week. Excited but terrified I'll say something dumb. Keyboard typing feels great at least.",
+      "mood": "😰",
+      "source": "import",
+      "created_at": "2026-03-12T23:10:00+00:00"
+    },
+    {
+      "title": "Gratitude Moment",
+      "content": "Friday! Beat that tough boss in the game. Positive feedback on code review. Sarah's meme made me smile—things might be okay.",
       "mood": "😊",
       "source": "import",
-      "created_at": "2026-03-23T20:00:00+00:00"
+      "created_at": "2026-03-13T19:00:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Gamed with Sarah—co-op was fun, no major awkwardness. Exhausted but hopeful. What's next?",
+      "mood": "💪",
+      "source": "import",
+      "created_at": "2026-03-14T21:50:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Weekend winding down, but my brain won't shut off. Still replaying that coffee date with Sarah—did I say something dumb? Played some RPG after, felt safe in the game world. Need to text her tomorrow, ugh.",
+      "mood": "🤔",
+      "source": "import",
+      "created_at": "2026-03-15T11:00:00+00:00"
+    },
+    {
+      "title": "Monday dread",
+      "content": "Woke up to a Slack ping from boss about weekly sync. Why can't everything be async? Texted Sarah good morning, she replied quick—heart racing but kinda nice.",
+      "mood": "😰",
+      "source": "import",
+      "created_at": "2026-03-16T07:45:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Lunch delivered, ate while staring at code. Meeting went okay, no disasters. Sarah suggested co-op gaming tonight—nervous but excited? Fingers crossed.",
+      "mood": "😌",
+      "source": "import",
+      "created_at": "2026-03-17T12:45:00+00:00"
+    },
+    {
+      "title": "Game night update",
+      "content": "Gaming with Sarah was fun! We laughed at my character's dumb choices. She's inviting me to a low-key dinner this weekend. Is this real?",
+      "mood": "❤️",
+      "source": "import",
+      "created_at": "2026-03-17T23:30:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Work dragged, decision on project direction stressing me out. Ordered pizza again. Thinking about dinner with Sarah— what if I burn something?",
+      "mood": "😔",
+      "source": "import",
+      "created_at": "2026-03-18T17:20:00+00:00"
+    },
+    {
+      "title": "Recipe hunt",
+      "content": "Found a precise recipe for chicken stir-fry, gonna practice for Saturday. Work email praised my last commit—small win. Sarah's meme made me smile.",
+      "mood": "💪",
+      "source": "import",
+      "created_at": "2026-03-19T08:15:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Friday finally. Boss threw a curveball task, but I handled it solo. Texting Sarah about tomorrow—hope I don't overthink the menu.",
+      "mood": "😊",
+      "source": "import",
+      "created_at": "2026-03-20T13:00:00+00:00"
+    },
+    {
+      "title": "Pre-date jitters",
+      "content": "Keyboard tinkering to calm nerves. Dinner tomorrow at my place? She said yes. What if conversation dies? But her voice call earlier was warm.",
+      "mood": "😰",
+      "source": "import",
+      "created_at": "2026-03-20T22:45:00+00:00"
+    },
+    {
+      "title": "Date recap",
+      "content": "Dinner with Sarah went better than expected! Stir-fry wasn't perfect but she ate it. We talked for hours, no awkward silences. Feeling hopeful.",
+      "mood": "🎉",
+      "source": "import",
+      "created_at": "2026-03-21T21:00:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Lazy Sunday gaming solo. Still buzzing from yesterday—Sarah wants to do this again. Work off, but mind racing about next week.",
+      "mood": "😌",
+      "source": "import",
+      "created_at": "2026-03-22T10:30:00+00:00"
+    },
+    {
+      "title": "Back to grind",
+      "content": "Monday blues hit hard, deadline looming. Gratitude for Sarah though, her text cheered me up. Might try a new recipe soon.",
+      "mood": "😔",
+      "source": "import",
+      "created_at": "2026-03-23T18:00:00+00:00"
+    },
+    {
+      "title": null,
+      "content": "Long day, fixed a bug that was haunting me. Sarah and I planned a movie night—virtual for now. Sleep calling, but brain won't quit.",
+      "mood": "🤔",
+      "source": "import",
+      "created_at": "2026-03-24T23:15:00+00:00"
     }
   ],
-  "total": 64
+  "total": 63
 }
