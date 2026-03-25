@@ -32,7 +32,7 @@ export default function AuthForm() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-500/20 backdrop-blur-sm mb-4">
             <span className="text-3xl">📓</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">Memory Journal</h1>
+          <h1 className="text-2xl font-bold text-white">EverMind</h1>
           <p className="text-primary-200/70 mt-1">Your memory-powered reflection space</p>
         </div>
 

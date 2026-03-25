@@ -198,8 +198,41 @@ async def main():
     print(f"   Output: {OUTPUT_FILE}")
     print()
 
-    # Step 1: Generate persona
-    persona = await generate_persona()
+    # Step 1: Get persona (custom or auto-generated)
+    print("How would you like to define the journal writer's persona?")
+    print("  1) Auto-generate a random persona using AI")
+    print("  2) Enter a custom persona description")
+    print("  3) Load persona from a text file")
+    print()
+    choice = input("Choose [1/2/3] (default: 1): ").strip() or "1"
+
+    if choice == "2":
+        print("\nEnter your persona description (press Enter twice to finish):")
+        lines = []
+        while True:
+            line = input()
+            if line == "" and lines and lines[-1] == "":
+                lines.pop()  # remove trailing blank
+                break
+            lines.append(line)
+        persona = "\n".join(lines)
+        if not persona.strip():
+            print("⚠️  Empty persona, falling back to auto-generate...")
+            persona = await generate_persona()
+        else:
+            print(f"✅ Custom persona loaded ({len(persona)} chars)")
+    elif choice == "3":
+        file_path = input("\nEnter path to persona text file: ").strip()
+        try:
+            persona = Path(file_path).read_text(encoding="utf-8").strip()
+            print(f"✅ Persona loaded from file ({len(persona)} chars)")
+        except (FileNotFoundError, OSError) as e:
+            print(f"⚠️  Could not read file: {e}")
+            print("   Falling back to auto-generate...")
+            persona = await generate_persona()
+    else:
+        persona = await generate_persona()
+
     print()
 
     # Step 2: Generate journals in batches of 10-15 days

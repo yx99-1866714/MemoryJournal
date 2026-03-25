@@ -41,7 +41,7 @@ async def generate_title(journal_text: str) -> str:
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://memoryjournal.app",
-        "X-Title": "Memory Journal",
+        "X-Title": "EverMind",
     }
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         resp = await client.post(OPENROUTER_URL, json=payload, headers=headers)
@@ -82,7 +82,7 @@ async def generate_tags(journal_text: str, existing_tags: list[str]) -> list[str
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://memoryjournal.app",
-        "X-Title": "Memory Journal",
+        "X-Title": "EverMind",
     }
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         resp = await client.post(OPENROUTER_URL, json=payload, headers=headers)
@@ -173,7 +173,7 @@ async def extract_goals_tasks(
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://memoryjournal.app",
-        "X-Title": "Memory Journal",
+        "X-Title": "EverMind",
     }
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         resp = await client.post(OPENROUTER_URL, json=payload, headers=headers)
@@ -292,7 +292,7 @@ async def generate_feedback(
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://memoryjournal.app",
-        "X-Title": "Memory Journal",
+        "X-Title": "EverMind",
     }
 
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
@@ -407,7 +407,7 @@ async def generate_chat_response(
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://memoryjournal.app",
-        "X-Title": "Memory Journal",
+        "X-Title": "EverMind",
     }
 
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
@@ -548,7 +548,7 @@ async def generate_goal_secretary_response(
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://memoryjournal.app",
-        "X-Title": "Memory Journal",
+        "X-Title": "EverMind",
     }
 
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
@@ -659,7 +659,7 @@ async def generate_checkin_message(
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://memoryjournal.app",
-        "X-Title": "Memory Journal",
+        "X-Title": "EverMind",
     }
 
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:
@@ -723,7 +723,7 @@ async def analyze_emotional_state(
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://memoryjournal.app",
-        "X-Title": "Memory Journal",
+        "X-Title": "EverMind",
     }
 
     try:
@@ -805,7 +805,7 @@ async def generate_proactive_checkin(
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://memoryjournal.app",
-        "X-Title": "Memory Journal",
+        "X-Title": "EverMind",
     }
 
     async with httpx.AsyncClient(timeout=TIMEOUT) as client:

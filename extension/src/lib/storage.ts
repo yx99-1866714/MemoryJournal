@@ -2,7 +2,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from "idb"
 
 import type { JournalDraft } from "./types"
 
-interface MemoryJournalDB extends DBSchema {
+interface EverMindDB extends DBSchema {
   drafts: {
     key: string
     value: JournalDraft
@@ -10,11 +10,11 @@ interface MemoryJournalDB extends DBSchema {
   }
 }
 
-let dbPromise: Promise<IDBPDatabase<MemoryJournalDB>> | null = null
+let dbPromise: Promise<IDBPDatabase<EverMindDB>> | null = null
 
-function getDB(): Promise<IDBPDatabase<MemoryJournalDB>> {
+function getDB(): Promise<IDBPDatabase<EverMindDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<MemoryJournalDB>("memory-journal", 1, {
+    dbPromise = openDB<EverMindDB>("evermind", 1, {
       upgrade(db) {
         const store = db.createObjectStore("drafts", { keyPath: "id" })
         store.createIndex("by-updated", "updated_at")

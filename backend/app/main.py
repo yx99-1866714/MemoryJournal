@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="MemoryJournal API",
+    title="EverMind API",
     version="0.1.0",
     lifespan=lifespan,
 )

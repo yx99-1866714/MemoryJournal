@@ -98,7 +98,7 @@ async def export_journals(
     ]
     return JSONResponse(
         content={"journals": data, "total": len(data)},
-        headers={"Content-Disposition": "attachment; filename=MemoryJournal_export.json"},
+        headers={"Content-Disposition": "attachment; filename=EverMind_export.json"},
     )
 
 

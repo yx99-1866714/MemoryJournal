@@ -99,7 +99,7 @@ async def _generate_insights(journals: list[dict], period: str) -> dict:
         "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://memoryjournal.app",
-        "X-Title": "Memory Journal",
+        "X-Title": "EverMind",
     }
 
     try:

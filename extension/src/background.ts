@@ -13,7 +13,7 @@ const CHECK_INTERVAL_MINUTES = 30
 // ── Setup ────────────────────────────────────────────
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("Memory Journal extension installed")
+  console.log("EverMind extension installed")
   // Create recurring alarm for reminder checks
   chrome.alarms.create(ALARM_NAME, { periodInMinutes: CHECK_INTERVAL_MINUTES })
   // Run an initial check shortly after install

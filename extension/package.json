@@ -1,6 +1,6 @@
 {
-  "name": "memory-journal",
-  "displayName": "Memory Journal",
+  "name": "evermind",
+  "displayName": "EverMind",
   "version": "0.1.0",
   "description": "A memory-powered journaling Chrome extension",
   "scripts": {

@@ -62,7 +62,7 @@ export default function Layout({ children, title, showNav = true }: Props) {
                 className="flex items-center gap-2 text-lg font-bold text-primary-700 hover:text-primary-600 transition"
               >
                 <span className="text-xl">📓</span>
-                Memory Journal
+                EverMind
               </button>
               <nav className="hidden sm:flex items-center gap-1 ml-4">
                 {navItems.map((item) => (
