@@ -29,6 +29,7 @@ async def process_journal(
     user_id: str,
     user_name: str = "User",
     selected_agent_id: str | None = None,
+    skip_checkins: bool = False,
 ):
     """
     Full pipeline for processing a submitted journal entry.
@@ -38,7 +39,7 @@ async def process_journal(
     """
     async with SessionLocal() as db:
         try:
-            await _process(db, journal_id, user_id, user_name, selected_agent_id)
+            await _process(db, journal_id, user_id, user_name, selected_agent_id, skip_checkins)
         except Exception as e:
             logger.exception("Failed to process journal %s: %s", journal_id, e)
             # Mark journal as failed
@@ -85,6 +86,7 @@ async def _process(
     user_id: str,
     user_name: str,
     selected_agent_id: str | None = None,
+    skip_checkins: bool = False,
 ):
     journal = await _get_journal(db, journal_id)
     if not journal:
@@ -188,10 +190,13 @@ async def _process(
             logger.warning("Goals/tasks extraction failed (non-fatal): %s", e)
 
     # Step 6: Generate proactive check-in messages from all agents
-    if settings.OPENROUTER_API_KEY:
+    # (skipped during bulk import for older journals to save LLM calls)
+    if settings.OPENROUTER_API_KEY and not skip_checkins:
         await _generate_agent_checkins(
             db, journal, user_id, memories
         )
+    elif skip_checkins:
+        logger.info("Skipping agent check-ins for journal %s (bulk import)", journal_id)
 
 
 async def _generate_agent_checkins(

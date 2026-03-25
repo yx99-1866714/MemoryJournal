@@ -109,7 +109,11 @@ async def import_journals(
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    """Import journals from exported JSON. Skips duplicates (matching content)."""
+    """Import journals from exported JSON. Skips duplicates (matching content).
+    
+    Only generates agent check-in messages for the most recent journal
+    to avoid excessive LLM calls during bulk imports.
+    """
     from datetime import datetime, timezone
     from hashlib import sha256
     from app.models.journal import Journal as JournalModel
@@ -129,6 +133,7 @@ async def import_journals(
 
     imported = 0
     skipped = 0
+    imported_journals = []  # Track (journal_id, created_at) for all imported journals
 
     for entry in entries:
         content = entry.get("content", "").strip()
@@ -166,17 +171,27 @@ async def import_journals(
         await db.flush()
         await db.refresh(journal)
 
-        # Queue background processing (EverMemOS + goals/tasks extraction)
-        background_tasks.add_task(
-            process_journal,
-            journal_id=str(journal.id),
-            user_id=user_id,
-        )
-
+        imported_journals.append((str(journal.id), journal.created_at))
         existing_hashes.add(content_hash)
         imported += 1
 
     await db.commit()
+
+    # Find the latest journal by created_at — only this one gets agent check-ins
+    latest_journal_id = None
+    if imported_journals:
+        imported_journals.sort(key=lambda x: x[1])
+        latest_journal_id = imported_journals[-1][0]
+
+    # Queue background processing for all imported journals
+    for journal_id, _ in imported_journals:
+        background_tasks.add_task(
+            process_journal,
+            journal_id=journal_id,
+            user_id=user_id,
+            skip_checkins=(journal_id != latest_journal_id),
+        )
+
     return {"imported": imported, "skipped": skipped, "total": len(entries)}
 
 
