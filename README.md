@@ -1,5 +1,5 @@
 # MySaga
-![alt text](image.png)
+![alt text](image-1.png)
 A memory-powered AI journaling Chrome extension with persistent AI companions. Write daily journal entries, and a team of AI agents — powered by your accumulated memories — will help you reflect, set goals, track habits, and manage your emotional wellbeing.
 
 ---
@@ -15,14 +15,14 @@ Unlike typical journaling apps, MySaga doesn't just store text — it **processe
 ## Key Features
 
 ### 📓 Journaling
-![alt text](image-3.png)
+![alt text](image-2.png)
 - **Quick Entry** via the Chrome side panel — write journal entries without leaving your current tab
 - **Full Dashboard** with a calendar view, journal history, and rich editing
 - **Auto-titling** — AI generates concise titles for each entry
 - **Re-processing** — edit a journal and re-submit it; AI agents re-analyze while preserving chat history
 
 ### 🤖 AI Companions
-![alt text](image-4.png)
+![alt text](image-3.png)
 Four built-in AI agents, each with a distinct personality and role:
 
 | Agent | Role | What It Does |
@@ -35,7 +35,8 @@ Four built-in AI agents, each with a distinct personality and role:
 You can also **create custom agents** with your own name, purpose, tone, and system prompt.
 
 ### 🎯 Goals & Task Management
-![alt text](image-5.png)
+![alt text](image-4.png)
+
 - **AI-powered goal creation** — tell the Goal Secretary "help me plan a workout routine" and it creates goals + tasks
 - **One-time tasks** with deadline dates
 - **Recurring tasks** (daily/weekly) that auto-reset:
@@ -44,7 +45,7 @@ You can also **create custom agents** with your own name, purpose, tone, and sys
 - **Visual dashboard** with progress tracking, overdue alerts, and task completion
 
 ### 💬 Proactive Check-ins
-![alt text](image-7.png)
+![alt text](image-5.png)
 AI agents **proactively reach out** to you based on your emotional state:
 - **Critical urgency** (e.g., breakup, crisis) → check-ins every hour
 - **Elevated urgency** (e.g., stress, anxiety) → check-ins every 24 hours
@@ -53,7 +54,7 @@ AI agents **proactively reach out** to you based on your emotional state:
 The check-in scheduler runs in the background and generates contextually-aware messages based on recent journals, chat history, and goals.
 
 ### 📊 Insights & Analytics
-![alt text](image-8.png)
+![alt text](image-6.png)
 - Weekly pattern analysis and emotional trend tracking
 - Memory-powered insights that surface recurring themes
 - Goal progress summaries
