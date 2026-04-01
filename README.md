@@ -2,6 +2,10 @@
 ![alt text](image-1.png)
 A memory-powered AI journaling Chrome extension with persistent AI companions. Write daily journal entries, and a team of AI agents — powered by your accumulated memories — will help you reflect, set goals, track habits, and manage your emotional wellbeing.
 
+Video Demo Link: https://youtu.be/4P9wEJxaH8Q
+
+Want to try it? Download from "Releases" section to the right
+
 ---
 
 ## What Is MySaga?
