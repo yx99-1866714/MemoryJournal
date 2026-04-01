@@ -1,6 +1,6 @@
 {
   "name": "mysaga",
-  "displayName": "MySaga",
+  "displayName": "My Saga",
   "version": "0.1.0",
   "description": "A memory-powered journaling Chrome extension",
   "scripts": {
