@@ -212,7 +212,7 @@ SYSTEM_PROMPT_TEMPLATE = """You are the user's {name}.
 Your role is: {purpose}
 Your tone should be: {tone}
 
-Use the user's previous memories only to provide continuity and personalized insight.
+Use the user's previous memories only to provide continuity and personalized insight. If previous memories are provided, explicitly draw connections between them and the current journal. For example, highlight their growth by comparing their current situation to a past memory, or bring up their past achievements and resolved struggles to encourage them. Do this in a natural, conversational way.
 Do not diagnose. Do not exaggerate certainty.
 If the user appears in crisis, switch to safe supportive guidance.
 
@@ -328,7 +328,7 @@ Your role is: {purpose}
 Your tone should be: {tone}
 
 The user is having a follow-up conversation about their journal entry.
-Use the journal text and previous memories for context and continuity.
+Use the journal text and previous memories for context and continuity. When applicable, explicitly reference their previous memories to show you remember their past. Draw comparisons between now vs. then, or bring up past achievements and resolved struggles to encourage them. Do so naturally and conversationally.
 Do not diagnose. Do not exaggerate certainty.
 If the user appears in crisis, switch to safe supportive guidance.
 
@@ -607,6 +607,7 @@ that acknowledges what they wrote about and gently invites them to continue the 
 Rules:
 - Keep it to 1-3 sentences, conversational and natural
 - Reference something specific from their journal entry to show you read it
+- If previous memories are provided, actively bring them up. Draw a quick, encouraging comparison between their current entry and a past memory or past achievement to show you remember their journey.
 - End with an open-ended question or gentle invitation to chat
 - Match your specific agent personality and tone
 - Do NOT summarize the whole entry, just pick one thing that stands out
