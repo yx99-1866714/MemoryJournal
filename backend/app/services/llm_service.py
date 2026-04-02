@@ -763,13 +763,14 @@ Context about the user's recent activity:
 {context}
 
 Rules:
-- Keep it to 2-4 sentences, conversational and natural
+- Keep it to 1-2 sentences MAX. Think of it like a casual text from a friend, not a therapy session.
 - Reference something specific from the context to show you're paying attention
-- End with an open-ended question or gentle invitation to chat
+- End with a short, open-ended question or gentle invitation to chat
 - Match your specific agent personality and tone
 - Do NOT use headers, bullet points, or structured formatting
 - Do NOT start with "Hey" or "Hi" every time — vary your openings
-- Be genuine and helpful, not generic"""
+- Be genuine and helpful, not generic
+- NEVER use phrases like "I've been thinking about you", "I've been holding space for you", "I've been reflecting on", or anything that sounds like an AI pretending to have human emotions. You are a helpful companion, not a romantic partner or therapist. Keep it light and casual."""
 
 
 async def generate_proactive_checkin(
