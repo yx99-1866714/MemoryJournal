@@ -7,7 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import agents, auth, goals, insights, journals
 from app.config import settings
 from app.db import engine, Base, SessionLocal
-from app.models import User, Journal, Agent, AgentThread, AgentMessage, InsightCache  # noqa: F401 — register models
+from app.models import User, Journal, Agent, AgentThread, AgentMessage, InsightCache, Tag, journal_tags  # noqa: F401 — register models
+
+logger = logging.getLogger(__name__)
 
 # Configure logging for app modules
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
@@ -19,6 +21,7 @@ async def lifespan(app: FastAPI):
     # Create tables on startup (dev convenience; use Alembic migrations in production)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables verified/created: %s", list(Base.metadata.tables.keys()))
     # Seed built-in agents
     from app.services.agent_service import seed_builtin_agents
     async with SessionLocal() as db:

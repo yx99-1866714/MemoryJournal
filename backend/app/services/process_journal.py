@@ -118,14 +118,22 @@ async def _process(
             await db.commit()
             logger.info("Auto-generated title for journal %s: %s", journal_id, title)
         except Exception as e:
-            logger.warning("Failed to auto-generate title: %s", e)
+            logger.warning("Failed to auto-generate title: %s (%s)", e, type(e).__name__)
+            try:
+                await db.rollback()
+            except Exception:
+                pass
 
     # Step 0.5: Auto-generate tags
     if settings.OPENROUTER_API_KEY:
         try:
             await _generate_and_link_tags(db, journal, user_id)
         except Exception as e:
-            logger.warning("Failed to auto-generate tags: %s", e)
+            logger.warning("Failed to auto-generate tags: %s (%s)", e, type(e).__name__)
+            try:
+                await db.rollback()
+            except Exception:
+                pass
 
     # Step 1: Submit to EverMemOS (if API key is configured)
     memories = []
@@ -168,9 +176,13 @@ async def _process(
                 memory_types=["episodic", "profile"],
             )
         except Exception as e:
-            logger.warning("EverMemOS integration error (non-fatal): %s", e)
-            journal.evermemos_status = f"error: {str(e)[:450]}"
-            await db.commit()
+            logger.warning("EverMemOS integration error (non-fatal): %s (%s)", e, type(e).__name__)
+            try:
+                await db.rollback()
+                journal.evermemos_status = f"error: {str(e)[:450]}"
+                await db.commit()
+            except Exception:
+                pass
     else:
         logger.info("EverMemOS API key not configured, skipping memory submission")
 
@@ -209,7 +221,11 @@ async def _process(
                 db, extracted, user_id=user_id, journal_id=journal_id
             )
         except Exception as e:
-            logger.warning("Goals/tasks extraction failed (non-fatal): %s", e)
+            logger.warning("Goals/tasks extraction failed (non-fatal): %s (%s)", e, type(e).__name__)
+            try:
+                await db.rollback()
+            except Exception:
+                pass
 
     # Step 6: Generate proactive check-in messages from all agents
     # (skipped during bulk import for older journals to save LLM calls)
@@ -274,7 +290,7 @@ async def _generate_agent_checkins(
             )
         except Exception as e:
             logger.warning(
-                "Failed to generate check-in from '%s': %s", agent.name, e
+                "Failed to generate check-in from '%s': %s (%s)", agent.name, e, type(e).__name__
             )
 
     # Run all check-in generations concurrently
