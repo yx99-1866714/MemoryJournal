@@ -81,3 +81,37 @@ app.include_router(insights.router)
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/debug/db")
+async def debug_db():
+    """Temporary diagnostic endpoint — shows actual DB state. Remove after debugging."""
+    from sqlalchemy import inspect as sa_inspect, text
+    info = {"tables": [], "goals_count": None, "tasks_count": None, "errors": []}
+    try:
+        async with engine.begin() as conn:
+            tables = await conn.run_sync(lambda c: sa_inspect(c).get_table_names())
+            info["tables"] = sorted(tables)
+
+            if "goals" in tables:
+                result = await conn.execute(text("SELECT count(*) FROM goals"))
+                info["goals_count"] = result.scalar()
+            else:
+                info["errors"].append("'goals' table does NOT exist")
+
+            if "tasks" in tables:
+                result = await conn.execute(text("SELECT count(*) FROM tasks"))
+                info["tasks_count"] = result.scalar()
+            else:
+                info["errors"].append("'tasks' table does NOT exist")
+
+            # Show goals table columns if it exists
+            if "goals" in tables:
+                cols = await conn.run_sync(
+                    lambda c: [col["name"] for col in sa_inspect(c).get_columns("goals")]
+                )
+                info["goals_columns"] = cols
+
+    except Exception as e:
+        info["errors"].append(f"{type(e).__name__}: {str(e)}")
+    return info

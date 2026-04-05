@@ -83,8 +83,8 @@ export default function GoalsDashboard() {
       setGoals(goalsRes.goals)
       // Standalone tasks are those not linked to a goal
       setStandaloneTasks(tasksRes.tasks.filter((t) => !t.goal_id))
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Failed to load goals/tasks:", err)
     } finally {
       setLoading(false)
     }
@@ -143,7 +143,7 @@ export default function GoalsDashboard() {
       setNewGoalDue("")
       setShowCreateGoal(false)
       reload()
-    } catch { }
+    } catch (err) { console.error("Failed to create goal:", err) }
     setCreatingGoal(false)
   }
 
@@ -159,7 +159,7 @@ export default function GoalsDashboard() {
       setNewTaskDue("")
       setShowCreateTask(false)
       reload()
-    } catch { }
+    } catch (err) { console.error("Failed to create task:", err) }
     setCreatingTask(false)
   }
 

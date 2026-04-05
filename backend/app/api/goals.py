@@ -133,17 +133,26 @@ async def list_goals(
     db: AsyncSession = Depends(get_db),
 ):
     """List all goals with their tasks."""
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info("list_goals called for user_id=%s", user_id)
+
     uid = uuid.UUID(user_id)
 
     # Auto-generate recurring tasks for the current period & reset completed ones
-    await generate_recurring_tasks(db, uid)
-    await reset_completed_recurring_tasks(db, uid)
+    try:
+        await generate_recurring_tasks(db, uid)
+        await reset_completed_recurring_tasks(db, uid)
+    except Exception as e:
+        logger.error("recurring tasks failed (non-fatal): %s (%s)", e, type(e).__name__)
+
     result = await db.execute(
         select(Goal)
         .where(Goal.user_id == uid)
         .order_by(Goal.created_at.desc())
     )
     goals = list(result.scalars().all())
+    logger.info("Found %d goals for user %s", len(goals), user_id)
 
     response = []
     for goal in goals:
@@ -193,6 +202,10 @@ async def create_goal(
     db.add(goal)
     await db.commit()
     await db.refresh(goal)
+    import logging
+    logging.getLogger(__name__).info(
+        "Created goal id=%s title='%s' for user=%s", goal.id, goal.title, user_id
+    )
     return _serialize_goal(goal)
 
 

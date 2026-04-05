@@ -194,7 +194,7 @@ export async function apiGetGoalsSummary(): Promise<GoalsSummary> {
 }
 
 export async function apiGetGoals(): Promise<{ goals: GoalItem[] }> {
-  return request<{ goals: GoalItem[] }>("/goals")
+  return request<{ goals: GoalItem[] }>("/goals/")
 }
 
 export async function apiGetTasks(status?: string): Promise<{ tasks: TaskItem[] }> {
