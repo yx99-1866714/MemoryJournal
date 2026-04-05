@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import agents, auth, goals, insights, journals
 from app.config import settings
 from app.db import engine, Base, SessionLocal
-from app.models import User, Journal, Agent, AgentThread, AgentMessage, InsightCache, Tag, journal_tags  # noqa: F401 — register models
+from app.models import User, Journal, JournalFeedback, Agent, AgentThread, AgentMessage, Goal, Task, InsightCache, Tag, journal_tags  # noqa: F401 — register models
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +19,22 @@ logging.getLogger("app").setLevel(logging.DEBUG if settings.VERBOSE else logging
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create tables on startup (dev convenience; use Alembic migrations in production)
+    expected_tables = list(Base.metadata.tables.keys())
+    logger.info("Expected tables from models: %s", expected_tables)
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database tables verified/created: %s", list(Base.metadata.tables.keys()))
+        try:
+            await conn.run_sync(Base.metadata.create_all)
+            logger.info("create_all completed successfully")
+        except Exception as e:
+            logger.error("create_all FAILED: %s (%s)", e, type(e).__name__)
+            raise
+        # Verify which tables actually exist in the database
+        from sqlalchemy import inspect as sa_inspect
+        actual_tables = await conn.run_sync(lambda sync_conn: sa_inspect(sync_conn).get_table_names())
+        logger.info("Actual tables in database: %s", actual_tables)
+        missing = set(expected_tables) - set(actual_tables)
+        if missing:
+            logger.error("MISSING TABLES after create_all: %s", missing)
     # Seed built-in agents
     from app.services.agent_service import seed_builtin_agents
     async with SessionLocal() as db:
